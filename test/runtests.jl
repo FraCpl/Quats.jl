@@ -89,7 +89,7 @@ function TEST_qtoxyz()
     return maximum([ex; ey; ez])
 end
 
-@testset "Quaternions.jl" begin
+@testset "Quats.jl" begin
     ERR_TOL = 1e-10
     @test TEST_rots() < ERR_TOL
     @test TEST_mult() < ERR_TOL
