@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Quats = "faa667c8-0f2e-4834-a931-554d4b02f32e"
+
+[sources]
+Quats = {path = ".."}
