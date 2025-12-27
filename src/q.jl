@@ -66,6 +66,7 @@ end
 """
 @inline function q_multiplyn(q...)
     qOut = copy(q[1])
+
     for i in 2:lastindex(q)
         qOut = q_multiply(qOut, q[i])
     end
@@ -134,6 +135,7 @@ end
     r12, r22, r32 = R_AB[2, 1], R_AB[2, 2], R_AB[2, 3]
     r13, r23, r33 = R_AB[3, 1], R_AB[3, 2], R_AB[3, 3]
     q_fromDcmCore!(q_AB, r11, r12, r13, r21, r22, r23, r31, r32, r33)
+    return nothing
 end
 
 @inline function q_fromDcmCore!(q, r11, r12, r13, r21, r22, r23, r31, r32, r33)
@@ -223,6 +225,7 @@ end
     r21, r22, r23 = yB_A
     r31, r32, r33 = zB_A
     q_fromDcmCore!(q_AB, r11, r12, r13, r21, r22, r23, r31, r32, r33)
+    return nothing
 end
 
 """

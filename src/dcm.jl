@@ -73,8 +73,8 @@ Compute the transformation matrix given as input the axes of a reference frame.
 end
 
 # R_AB(θ_AB)
-@inline function dcm_rotAxis(θ, axis::Int)
-    sθ, cθ = sincos(θ)
+@inline function dcm_rotAxis(angle, axis::Int)
+    sθ, cθ = sincos(angle)
     if axis == 1
         return [1 0 0; 0 cθ -sθ; 0 sθ cθ]
     elseif axis == 2
