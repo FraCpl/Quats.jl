@@ -47,6 +47,14 @@ end
     return nothing
 end
 
+# q1 <- q1 * q2
+@inline function q_multiply!(q1, q2)
+    ps, px, py, pz = q1
+    qs, qx, qy, qz = q2
+    q_multiplyCore!(q1, ps, px, py, pz, qs, qx, qy, qz)
+    return nothing
+end
+
 # Core quaternion multiplication function
 @inline function q_multiplyCore!(qOut, ps, px, py, pz, qs, qx, qy, qz)
     # p ⊗ q
