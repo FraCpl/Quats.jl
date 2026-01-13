@@ -386,6 +386,25 @@ q_fromAxisAngle(u, θ) = iszero(u) ? q_identity() : [cos(0.5θ); sin(0.5θ)*norm
     return q
 end
 
+function q_fromAxisAngle!(q, u, θ)
+    uNrm = 0.0
+    @inbounds for i in 1:3
+        uNrm += u[i]*u[i]
+    end
+
+    if uNrm == 0
+        q .= 0.0
+        q[1] = 1.0
+        return nothing
+    end
+
+    st, q[1] = sincos(0.5θ)
+    @inbounds for i in 1:3
+        q[i+1] = st*u[i]/uNrm
+    end
+    return nothing
+end
+
 @inline function q_toAxisAngle(q)
     qs, qx, qy, qz = q
     nqv = sqrt(qx*qx + qy*qy + qz*qz)
