@@ -1,10 +1,3 @@
-@inline function q_multiply(q_AB::SVector{4,T}, q_BC::SVector{4,T}) where {T}
-    ps, px, py, pz = q_AB
-    qs, qx, qy, qz = q_BC
-
-    return @SVector [ps*qs - px*qx - py*qy - pz*qz, px*qs + ps*qx - pz*qy + py*qz, py*qs + pz*qx + ps*qy - px*qz, pz*qs - py*qx + px*qy + ps*qz]
-end
-
 @inline function q_toDcm(q::SVector{4,T}) where {T}
     s, x, y, z = q
     x2, y2, z2 = x + x, y + y, z + z
@@ -57,25 +50,6 @@ end
         return @SVector [f*(r12 - r21); f*(r31 + r13); f*(r23 + r32); qx]
     end
     return @SVector [qx; f*(r23 - r32); f*(r31 - r13); f*(r12 - r21)]
-end
-
-@inline function q_transformVector(q_AB::SVector{4,T}, v_B::SVector{3,T}) where {T}
-    qs, qx, qy, qz = q_AB
-    x, y, z = v_B
-
-    cx = qy*z - qz*y
-    cy = qz*x - qx*z
-    cz = qx*y - qy*x
-
-    c2x = qy*cz - qz*cy
-    c2y = qz*cx - qx*cz
-    c2z = qx*cy - qy*cx
-
-    return @SVector [
-        x + 2(c2x + qs*cx)
-        y + 2(c2y + qs*cy)
-        z + 2(c2z + qs*cz)
-    ]
 end
 
 @inline function q_transpose(q::SVector{4,T}) where {T}

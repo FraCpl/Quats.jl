@@ -12,11 +12,18 @@ q_{AC} = q_{AB} ⊗ q_{BC}
     return q_AC
 end
 
+@inline function q_multiply(q_AB::SVector{4, T}, q_BC::SVector{4, T}) where {T}
+    ps, px, py, pz = q_AB
+    qs, qx, qy, qz = q_BC
+    os, ox, oy, oz = q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
+    return SVector{4, T}(os, ox, oy, oz)
+end
+
 # Baseline in-place multiplication function
 @inline function q_multiply!(q_AC, q_AB, q_BC)
     ps, px, py, pz = q_AB
     qs, qx, qy, qz = q_BC
-    q_multiplyCore!(q_AC, ps, px, py, pz, qs, qx, qy, qz)
+    q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
     return nothing
 end
 
@@ -27,7 +34,7 @@ end
 @inline function q_multiplyT1!(q_AC, q_BA, q_BC)
     ps, px, py, pz = q_BA
     qs, qx, qy, qz = q_BC
-    q_multiplyCore!(q_AC, ps, -px, -py, -pz, qs, qx, qy, qz)
+    q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, -px, -py, -pz, qs, qx, qy, qz)
     return nothing
 end
 
@@ -35,7 +42,7 @@ end
 @inline function q_multiplyT2!(q_AC, q_AB, q_CB)
     ps, px, py, pz = q_AB
     qs, qx, qy, qz = q_CB
-    q_multiplyCore!(q_AC, ps, px, py, pz, qs, -qx, -qy, -qz)
+    q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, px, py, pz, qs, -qx, -qy, -qz)
     return nothing
 end
 
@@ -43,7 +50,7 @@ end
 @inline function q_multiplyT12!(q_AC, q_BA, q_CB)
     ps, px, py, pz = q_BA
     qs, qx, qy, qz = q_CB
-    q_multiplyCore!(q_AC, ps, -px, -py, -pz, qs, -qx, -qy, -qz)
+    q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, -px, -py, -pz, qs, -qx, -qy, -qz)
     return nothing
 end
 
@@ -51,18 +58,17 @@ end
 @inline function q_multiply!(q1, q2)
     ps, px, py, pz = q1
     qs, qx, qy, qz = q2
-    q_multiplyCore!(q1, ps, px, py, pz, qs, qx, qy, qz)
+    q1[1], q1[2], q1[3], q1[4] = q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
     return nothing
 end
 
-# Core quaternion multiplication function
-@inline function q_multiplyCore!(qOut, ps, px, py, pz, qs, qx, qy, qz)
-    # p ⊗ q
-    qOut[1] = ps*qs - px*qx - py*qy - pz*qz
-    qOut[2] = px*qs + ps*qx - pz*qy + py*qz
-    qOut[3] = py*qs + pz*qx + ps*qy - px*qz
-    qOut[4] = pz*qs - py*qx + px*qy + ps*qz
-    return nothing
+# Core quaternion multiplication function, implementing p ⊗ q
+@inline function q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
+    os = ps*qs - px*qx - py*qy - pz*qz
+    ox = px*qs + ps*qx - pz*qy + py*qz
+    oy = py*qs + pz*qx + ps*qy - px*qz
+    oz = pz*qs - py*qx + px*qy + ps*qz
+    return os, ox, oy, oz
 end
 
 """
@@ -142,11 +148,11 @@ end
     r11, r21, r31 = R_AB[1, 1], R_AB[1, 2], R_AB[1, 3]
     r12, r22, r32 = R_AB[2, 1], R_AB[2, 2], R_AB[2, 3]
     r13, r23, r33 = R_AB[3, 1], R_AB[3, 2], R_AB[3, 3]
-    q_fromDcmCore!(q_AB, r11, r12, r13, r21, r22, r23, r31, r32, r33)
+    q_AB[1], q_AB[2], q_AB[3], q_AB[4] = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
     return nothing
 end
 
-@inline function q_fromDcmCore!(q, r11, r12, r13, r21, r22, r23, r31, r32, r33)
+@inline function q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
     # dcm11 = R_BA[1, 1]; dcm12 = R_BA[2, 1]; dcm13 = R_BA[3, 1];
     # dcm21 = R_BA[1, 2]; dcm22 = R_BA[2, 2]; dcm23 = R_BA[3, 2];
     # dcm31 = R_BA[1, 3]; dcm32 = R_BA[2, 3]; dcm33 = R_BA[3, 3];
@@ -188,31 +194,31 @@ end
         vmax = v4
     end
 
-    qx = 0.5*sqrt(abs(vmax))
-    f = 0.25/qx
+    qq = 0.5*sqrt(abs(vmax))
+    f = 0.25/qq
 
     if idx == 1
-        q[1] = f*(r23 - r32)
-        q[2] = qx
-        q[3] = f*(r12 + r21)
-        q[4] = f*(r31 + r13)
+        qs = f*(r23 - r32)
+        qx = qq
+        qy = f*(r12 + r21)
+        qz = f*(r31 + r13)
     elseif idx == 2
-        q[1] = f*(r31 - r13)
-        q[2] = f*(r12 + r21)
-        q[3] = qx
-        q[4] = f*(r23 + r32)
+        qs = f*(r31 - r13)
+        qx = f*(r12 + r21)
+        qy = qq
+        qz = f*(r23 + r32)
     elseif idx == 3
-        q[1] = f*(r12 - r21)
-        q[2] = f*(r31 + r13)
-        q[3] = f*(r23 + r32)
-        q[4] = qx
+        qs = f*(r12 - r21)
+        qx = f*(r31 + r13)
+        qy = f*(r23 + r32)
+        qz = qq
     else
-        q[1] = qx
-        q[2] = f*(r23 - r32)
-        q[3] = f*(r31 - r13)
-        q[4] = f*(r12 - r21)
+        qs = qq
+        qx = f*(r23 - r32)
+        qy = f*(r31 - r13)
+        qz = f*(r12 - r21)
     end
-    return nothing
+    return qs, qx, qy, qz
 end
 
 """
@@ -232,7 +238,7 @@ end
     r11, r12, r13 = xB_A
     r21, r22, r23 = yB_A
     r31, r32, r33 = zB_A
-    q_fromDcmCore!(q_AB, r11, r12, r13, r21, r22, r23, r31, r32, r33)
+    q_AB[1], q_AB[2], q_AB[3], q_AB[4] = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
     return nothing
 end
 
@@ -262,6 +268,13 @@ Project the vector v from frame B into frame A.
     return v_A
 end
 
+@inline function q_transformVector(q_AB::SVector{4, T}, v_B::SVector{3, T}) where {T}
+    qs, qx, qy, qz = q_AB
+    x, y, z = v_B
+    ox, oy, oz = q_transformVectorCore(qs, qx, qy, qz, x, y, z)
+    return SVector{3, T}(ox, oy, oz)
+end
+
 """
     q_transformVector!(v_A, q_AB, v_B)
 
@@ -271,7 +284,8 @@ Project the vector v from frame B into frame A.
     # qxv = q_AB[2:4] × v_B
     # return v_B + 2.0*(q_AB[2:4] × qxv + q_AB[1].*qxv) # v_A
     qs, qx, qy, qz = q_AB
-    q_transformVectorCore!(v_A, qs, qx, qy, qz, v_B)
+    x, y, z = v_B
+    v_A[1], v_A[2], v_A[3] = q_transformVectorCore(qs, qx, qy, qz, x, y, z)
     return nothing
 end
 
@@ -282,14 +296,12 @@ Project the vector v from frame B into frame A, using q_BA.
 """
 @inline function q_transformVectorT!(v_A, q_BA, v_B)
     qs, qx, qy, qz = q_BA
-    q_transformVectorCore!(v_A, qs, -qx, -qy, -qz, v_B)
+    x, y, z = v_B
+    v_A[1], v_A[2], v_A[3] = q_transformVectorCore(qs, -qx, -qy, -qz, x, y, z)
     return nothing
 end
 
-# q = q_AB
-@inline function q_transformVectorCore!(Vout, qs, qx, qy, qz, Vin)
-    x, y, z = Vin
-
+@inline function q_transformVectorCore(qs, qx, qy, qz, x, y, z)
     cx = qy*z - qz*y
     cy = qz*x - qx*z
     cz = qx*y - qy*x
@@ -298,10 +310,10 @@ end
     c2y = qz*cx - qx*cz
     c2z = qx*cy - qy*cx
 
-    Vout[1] = x + 2(c2x + qs*cx)
-    Vout[2] = y + 2(c2y + qs*cy)
-    Vout[3] = z + 2(c2z + qs*cz)
-    return nothing
+    xo = x + 2(c2x + qs*cx)
+    yo = y + 2(c2y + qs*cy)
+    zo = z + 2(c2z + qs*cz)
+    return xo, yo, zo
 end
 
 """
@@ -309,22 +321,20 @@ end
 
 Transpose the input quaternion.
 """
-@inline function q_transpose!(q)
-    @inbounds for i in 2:4
-        ;
-        q[i] = -q[i];
-    end
+function q_transpose!(q)
+    q[2], q[3], q[4] = -q[2], -q[3], -q[4]
     return nothing
 end
+
 @inline q_transpose(q) = [q[1]; -q[2]; -q[3]; -q[4]]
-@inline function q_transpose!(qt, q)
-    qt[1] = q[1]
-    @inbounds for i in 2:4
-        ;
-        qt[i] = -q[i];
-    end
+
+@inline q_transpose(q::SVector{4,T}) where {T} = SVector{4, T}(q[1], -q[2], -q[3], -q[4])
+
+function q_transpose!(qt, q)
+    qt[1], qt[2], qt[3], qt[4] = q[1], -q[2], -q[3], -q[4]
     return nothing
 end
+
 
 """
     q̇_AB = q_derivative(q_AB, ωAB_B)
@@ -345,6 +355,13 @@ frame ``A``, projected into frame ``B``.
     return dq_AB
 end
 
+@inline function q_derivative(q_AB::SVector{4, T}, ωAB_B::SVector{3, T}) where {T}
+    qs, qx, qy, qz = q_AB
+    wx, wy, wz = ωAB_B
+    os, ox, oy, oz = q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
+    return SVector{4, T}(os, ox, oy, oz)
+end
+
 """
     q_derivative!(q̇_AB, q_AB, ωAB_B)
 
@@ -360,16 +377,18 @@ frame ``A``, projected into frame ``B``.
 """
 @inline function q_derivative!(dq_AB, q_AB, ωAB_B)
     # q_multiply(q_AB, [0.0; 0.5.*ωAB_B])  # dq_BA
-
-    ps, px, py, pz = q_AB
-    qx, qy, qz = ωAB_B
-
-    dq_AB[1] = (-px * qx - py * qy - pz * qz) / 2
-    dq_AB[2] = (ps * qx - pz * qy + py * qz) / 2
-    dq_AB[3] = (pz * qx + ps * qy - px * qz) / 2
-    dq_AB[4] = (-py * qx + px * qy + ps * qz) / 2
-
+    qs, qx, qy, qz = q_AB
+    wx, wy, wz = ωAB_B
+    dq_AB[1], dq_AB[2], dq_AB[3], dq_AB[4] = q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
     return nothing
+end
+
+function q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
+    dqs = (-qx * wx - qy * wy - qz * wz) / 2
+    dqx = (qs * wx - qz * wy + qy * wz) / 2
+    dqy = (qz * wx + qs * wy - qx * wz) / 2
+    dqz = (-qy * wx + qx * wy + qs * wz) / 2
+    return dqs, dqx, dqy, dqz
 end
 
 """
@@ -470,7 +489,7 @@ end
 # Δt = t2 - t1
 # q1_AB = q_AB[t1]
 # q2_AB = q_AB[t2]
-@inline @views function q_rate(Δt, q1_AB, q2_AB)
+function q_rate(Δt, q1_AB, q2_AB)
     dq_AB = q_multiply(q_transpose(q1_AB), q2_AB)
     return q_toRv(dq_AB)/Δt
 end
