@@ -364,10 +364,10 @@ frame ``A``, projected into frame ``B``.
     ps, px, py, pz = q_AB
     qx, qy, qz = ωAB_B
 
-    dq_AB[1] = (- px*qx - py*qy - pz*qz)/2
-    dq_AB[2] = (+ ps*qx - pz*qy + py*qz)/2
-    dq_AB[3] = (+ pz*qx + ps*qy - px*qz)/2
-    dq_AB[4] = (- py*qx + px*qy + ps*qz)/2
+    dq_AB[1] = (-px * qx - py * qy - pz * qz) / 2
+    dq_AB[2] = (ps * qx - pz * qy + py * qz) / 2
+    dq_AB[3] = (pz * qx + ps * qy - px * qz) / 2
+    dq_AB[4] = (-py * qx + px * qy + ps * qz) / 2
 
     return nothing
 end
@@ -386,21 +386,30 @@ q_fromAxisAngle(u, θ) = iszero(u) ? q_identity() : [cos(0.5θ); sin(0.5θ)*norm
     return q
 end
 
+function q_fromAxisAngle!(q, idx::Int, θ)
+    sθ, cθ = sincos(θ / 2)
+    q .= 0
+    q[1] = cθ
+    q[idx + 1] = sθ
+    return nothing
+end
+
 function q_fromAxisAngle!(q, u, θ)
-    uNrm = 0.0
+    uNormSq = 0.0
     @inbounds for i in 1:3
-        uNrm += u[i]*u[i]
+        uNormSq += u[i] * u[i]
     end
 
-    if uNrm == 0
+    if uNormSq == 0
         q .= 0.0
         q[1] = 1.0
         return nothing
     end
 
-    st, q[1] = sincos(0.5θ)
+    st, q[1] = sincos(θ / 2)
+    st = st / sqrt(uNormSq)
     @inbounds for i in 1:3
-        q[i+1] = st*u[i]/uNrm
+        q[i + 1] = st * u[i]
     end
     return nothing
 end
@@ -415,6 +424,7 @@ end
     R = q_toDcm(q_AB)
     return R[1, :], R[2, :], R[3, :]    # xB_A, yB_A, zB_A
 end
+
 
 """
     q⁻¹ = q_inverse(q)
@@ -439,6 +449,8 @@ end
 end
 
 @inline q_fromRv(ϕ) = q_fromAxisAngle(ϕ, norm(ϕ))
+
+@inline q_fromRv!(q, ϕ) = q_fromAxisAngle!(q, ϕ, norm(ϕ))
 
 """
 This uses rotation vector to compute the average angular rate between two

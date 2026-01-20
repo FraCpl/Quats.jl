@@ -1,4 +1,5 @@
-using Quats, LinearAlgebra
+using Quats
+using LinearAlgebra
 using Test
 
 function TEST_rots()
