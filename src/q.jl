@@ -534,7 +534,7 @@ Compute the exponential of the input quaternion.
     qvnn = qvn == 0 ? 1.0 : qvn
     k = exp(qs)
     qvnn = k*sin(qvn)/qvnn
-    return [k*cos(qvn); qx*qvnn; qy*qvnn; qy*qvnn]
+    return [k*cos(qvn); qx*qvnn; qy*qvnn; qz*qvnn]
 end
 
 """
