@@ -80,12 +80,20 @@ end
 """
 @inline function q_multiplyn(q...)
     qOut = copy(q[1])
-
     for i in 2:lastindex(q)
         qOut = q_multiply(qOut, q[i])
     end
 
     return qOut
+end
+
+function q_multiplyn!(qOut, q...)
+    qOut .= q[1]
+    for i in 2:lastindex(q)
+        q_multiply!(qOut, q[i])
+    end
+
+    return nothing
 end
 
 """
@@ -103,34 +111,44 @@ Translate the input unitary quaternion into a transformation matrix.
 R_{AB}(q_{AB}) = I + 2qₛ[qᵥ×] + 2[qᵥ×]²
 ```
 """
-@inline function q_toDcm(q)
+@inline function q_toDcm(q_AB)
     R_BA = Matrix{Float64}(undef, 3, 3)
-    q_toDcm!(R_BA, q)
+    q_toDcm!(R_BA, q_AB)
     return R_BA
 end
 
-@views @inline function q_toDcm!(R, q)     # R_BA from q_BA
+@inline function q_toDcm(q_AB::SVector{4, T}) where {T}
+    qs, qx, qy, qz = q_AB
+    R11, R21, R31, R12, R22, R32, R13, R23, R33 = q_toDcmCore(qs, qx, qy, qz)
+    return SMatrix{3, 3, T}(R11, R21, R31, R12, R22, R32, R13, R23, R33)
+end
+
+@inline function q_toDcm!(R_AB, q_AB)     # R_BA from q_BA
     # qx = crossMat(q[2:4])
     # return I + 2.0*(qx*qx + q[1].*qx)
-    s, x, y, z = q
-    x2, y2, z2 = x + x, y + y, z + z
-    sx, sy, sz = s*x2, s*y2, s*z2
-    xx, xy, xz = x*x2, x*y2, x*z2
-    yy, yz, zz = y*y2, y*z2, z*z2
-
-    R[1, 1] = 1.0 - (yy + zz)
-    R[1, 2] = xy - sz
-    R[1, 3] = xz + sy
-
-    R[2, 1] = xy + sz
-    R[2, 2] = 1.0 - (xx + zz)
-    R[2, 3] = yz - sx
-
-    R[3, 1] = xz - sy
-    R[3, 2] = yz + sx
-    R[3, 3] = 1.0 - (xx + yy)
-
+    qs, qx, qy, qz = q_AB
+    R_AB[1, 1], R_AB[2, 1], R_AB[3, 1], R_AB[1, 2], R_AB[2, 2], R_AB[3, 2], R_AB[1, 3], R_AB[2, 3], R_AB[3, 3] = q_toDcmCore(qs, qx, qy, qz)
     return nothing
+end
+
+function q_toDcmCore(qs, qx, qy, qz)
+    x2, y2, z2 = qx + qx, qy + qy, qz + qz
+    sx, sy, sz = qs*x2, qs*y2, qs*z2
+    xx, xy, xz = qx*x2, qx*y2, qx*z2
+    yy, yz, zz = qy*y2, qy*z2, qz*z2
+
+    R11 = 1 - (yy + zz)
+    R12 = xy - sz
+    R13 = xz + sy
+
+    R21 = xy + sz
+    R22 = 1 - (xx + zz)
+    R23 = yz - sx
+
+    R31 = xz - sy
+    R32 = yz + sx
+    R33 = 1 - (xx + yy)
+    return R11, R21, R31, R12, R22, R32, R13, R23, R33
 end
 
 """
@@ -145,36 +163,18 @@ Translate the input rotation matrix into a unitary quaternion.
 end
 
 @inline function q_fromDcm!(q_AB, R_AB)
-    r11, r21, r31 = R_AB[1, 1], R_AB[1, 2], R_AB[1, 3]
-    r12, r22, r32 = R_AB[2, 1], R_AB[2, 2], R_AB[2, 3]
-    r13, r23, r33 = R_AB[3, 1], R_AB[3, 2], R_AB[3, 3]
+    r11, r21, r31, r12, r22, r32, r13, r23, r33 = R_AB
     q_AB[1], q_AB[2], q_AB[3], q_AB[4] = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
     return nothing
 end
 
+@inline function q_fromDcm(R_AB::SMatrix{3, 3, T}) where {T}
+    r11, r21, r31, r12, r22, r32, r13, r23, r33 = R_AB
+    qs, qx, qy, qz = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
+    return SVector{3, T}(qs, qx, qy, qz)
+end
+
 @inline function q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
-    # dcm11 = R_BA[1, 1]; dcm12 = R_BA[2, 1]; dcm13 = R_BA[3, 1];
-    # dcm21 = R_BA[1, 2]; dcm22 = R_BA[2, 2]; dcm23 = R_BA[3, 2];
-    # dcm31 = R_BA[1, 3]; dcm32 = R_BA[2, 3]; dcm33 = R_BA[3, 3];
-
-    # vv = 1.0 .+ [+dcm11-dcm22-dcm33; -dcm11+dcm22-dcm33; -dcm11-dcm22+dcm33; +dcm11+dcm22+dcm33]
-    # idx = argmax(vv);
-    # qx = 0.5*sqrt(abs(vv[idx]))
-    # f  = 0.25/qx;
-
-    # if idx == 1
-    #     return [f*(dcm23 - dcm32); qx; f*(dcm12 + dcm21);  f*(dcm31 + dcm13)]
-    # elseif idx == 2
-    #     return [f*(dcm31 - dcm13); f*(dcm12 + dcm21); qx; f*(dcm23 + dcm32)]
-    # elseif idx == 3
-    #     return [f*(dcm12 - dcm21); f*(dcm31 + dcm13); f*(dcm23 + dcm32); qx]
-    # end
-    # return [qx; f*(dcm23 - dcm32); f*(dcm31 - dcm13); f*(dcm12 - dcm21)]
-
-    # r11, r21, r31 = R_BA[1, 1], R_BA[1, 2], R_BA[1, 3]
-    # r12, r22, r32 = R_BA[2, 1], R_BA[2, 2], R_BA[2, 3]
-    # r13, r23, r33 = R_BA[3, 1], R_BA[3, 2], R_BA[3, 3]
-
     vmax = 1 + r11 - r22 - r33
     v2 = 1 - r11 + r22 - r33
     v3 = 1 - r11 - r22 + r33
@@ -198,25 +198,25 @@ end
     f = 0.25/qq
 
     if idx == 1
-        qs = f*(r23 - r32)
+        qs = f*(r32 - r23)
         qx = qq
         qy = f*(r12 + r21)
         qz = f*(r31 + r13)
     elseif idx == 2
-        qs = f*(r31 - r13)
+        qs = f*(r13 - r31)
         qx = f*(r12 + r21)
         qy = qq
         qz = f*(r23 + r32)
     elseif idx == 3
-        qs = f*(r12 - r21)
+        qs = f*(r21 - r12)
         qx = f*(r31 + r13)
         qy = f*(r23 + r32)
         qz = qq
     else
         qs = qq
-        qx = f*(r23 - r32)
-        qy = f*(r31 - r13)
-        qz = f*(r12 - r21)
+        qx = f*(r32 - r23)
+        qy = f*(r13 - r31)
+        qz = f*(r21 - r12)
     end
     return qs, qx, qy, qz
 end
@@ -247,7 +247,17 @@ end
 
 Generate a random unitary quaternion.
 """
-@inline q_random() = normalize(randn(4))
+@inline function q_random()
+    q = randn(4)
+    normalize!(q)
+    return q
+end
+
+@inline function q_random(rng)
+    q = randn(rng, 4)
+    normalize!(q)
+    return q
+end
 
 """
     q_identity()
@@ -310,9 +320,9 @@ end
     c2y = qz*cx - qx*cz
     c2z = qx*cy - qy*cx
 
-    xo = x + 2(c2x + qs*cx)
-    yo = y + 2(c2y + qs*cy)
-    zo = z + 2(c2z + qs*cz)
+    xo = x + 2 * (c2x + qs*cx)
+    yo = y + 2 * (c2y + qs*cy)
+    zo = z + 2 * (c2z + qs*cz)
     return xo, yo, zo
 end
 
@@ -491,53 +501,69 @@ end
 # q2_AB = q_AB[t2]
 function q_rate(Δt, q1_AB, q2_AB)
     dq_AB = q_multiply(q_transpose(q1_AB), q2_AB)
-    return q_toRv(dq_AB)/Δt
+    return q_toRv(dq_AB) ./ Δt
 end
 
 # https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-# 3(yaw)-2(pitch)-1(roll) sequence
-# CAUTION: Only [3, 2, 1] and [1, 2, 3] sequencs are implemented for now
-function q_toEuler(q, sequence=[3, 2, 1])
+# CAUTION: Only :zyx and :xyz sequences are implemented for now
+# θz, θy, θx = q_toEuler(q, :zyx)
+# θx, θz, θy = q_toEuler(q, :xzy)
+@inline q_toEuler(q, s::Symbol=:zyx) = q_toEuler(q, Val(s))
+
+@inline function q_toEuler(q, ::Val{:zyx})
     qs, qx, qy, qz = q
 
-    if sequence == [3, 2, 1]
-        # roll (x-axis rotation)
-        t1 = 2(qs*qx + qy*qz)
-        t2 = 1 - 2(qx*qx + qy*qy)
-        roll = atan(t1, t2)
+    t1 = 2 * (qs*qx + qy*qz)
+    t2 = 1 - 2 * (qx*qx + qy*qy)
+    θx = atan(t1, t2)
 
-        # pitch (y-axis rotation)
-        t3 = 2(qs*qy - qz*qx)
-        t3 = max(-1.0, min(t3, 1.0))
-        pitch = asin(t3)
+    t3 = 2 * (qs*qy - qz*qx)
+    t3 = clamp(t3, -1.0, 1.0)
+    θy = asin(t3)
 
-        # yaw (z-axis rotation)
-        t4 = 2(qs*qz + qx*qy)
-        t5 = 1 - 2(qy*qy + qz*qz)
-        yaw = atan(t4, t5)
+    t4 = 2 * (qs*qz + qx*qy)
+    t5 = 1 - 2 * (qy*qy + qz*qz)
+    θz = atan(t4, t5)
 
-        return [yaw; pitch; roll]
-
-    elseif sequence == [1, 2, 3]
-        sinPitch = 2(qx*qz + qy*qs)
-        mask = sinPitch ≥ 1 - 10*eps() || sinPitch ≤ -1 + 10*eps()
-        sinPitch = max(-1.0, min(sinPitch, 1.0))
-        pitch = asin(sinPitch)
-        if mask
-            roll = 0
-            yaw = sign(sinPitch)*2*atan(qx, qs)
-        else
-            roll = atan(-2(qy*qz - qx*qs), qs^2 - qx^2 - qy^2 + qz^2);
-            yaw = atan(-2(qx*qy - qz*qs), qs^2 + qx^2 - qy^2 - qz^2)
-        end
-        return [roll; pitch; yaw]
-    end
+    return θz, θy, θx
 end
 
-@inline function q_fromEuler(θ, sequence=[3, 2, 1])
+function q_toEuler(q, ::Val{:xyz})
+    qs, qx, qy, qz = q
+
+    sinPitch = 2 * (qx*qz + qy*qs)
+    mask = sinPitch ≥ 1 - 10*eps() || sinPitch ≤ -1 + 10*eps()
+    sinPitch = max(-1.0, min(sinPitch, 1.0))
+    θy = asin(sinPitch)
+    if mask
+        θx = 0
+        θz = sign(sinPitch)*2*atan(qx, qs)
+    else
+        θx = atan(-2 * (qy*qz - qx*qs), qs^2 - qx^2 - qy^2 + qz^2);
+        θz = atan(-2 * (qx*qy - qz*qs), qs^2 + qx^2 - qy^2 - qz^2)
+    end
+
+    return θx, θy, θz
+end
+
+@inline q_fromEuler(θ1, θ2, θ3, s::Symbol=:zyx) = q_fromEuler(θ1, θ2, θ3, Val(s))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyz}) = q_fromSequence((θ1, θ2, θ3), (1, 2, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzy}) = q_fromSequence((θ1, θ2, θ3), (1, 3, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxz}) = q_fromSequence((θ1, θ2, θ3), (2, 1, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzx}) = q_fromSequence((θ1, θ2, θ3), (2, 3, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxy}) = q_fromSequence((θ1, θ2, θ3), (3, 1, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyx}) = q_fromSequence((θ1, θ2, θ3), (3, 2, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyx}) = q_fromSequence((θ1, θ2, θ3), (1, 2, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzx}) = q_fromSequence((θ1, θ2, θ3), (1, 3, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxy}) = q_fromSequence((θ1, θ2, θ3), (2, 1, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzy}) = q_fromSequence((θ1, θ2, θ3), (2, 3, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxz}) = q_fromSequence((θ1, θ2, θ3), (3, 1, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyz}) = q_fromSequence((θ1, θ2, θ3), (3, 2, 3))
+
+@inline function q_fromSequence(θ, sequence=(3, 2, 1))
     q = q_fromAxisAngle(sequence[1], θ[1])
     for i in 2:lastindex(θ)
-        q .= q_multiply(q, q_fromAxisAngle(sequence[i], θ[i]))
+        q_multiply!(q, q_fromAxisAngle(sequence[i], θ[i]))
     end
     return q
 end

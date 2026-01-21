@@ -31,7 +31,7 @@ end
 
 function TEST_mult()
     q = [q_random() for _ in 1:4]
-    ε = q_multiplyn(q[1], q[2], q[3], q[4]) - q_multiply(q[1], q_multiply(q[2], q_multiply(q[3], q[4])))
+    ε = q_multiplyn(q...) - q_multiply(q[1], q_multiply(q[2], q_multiply(q[3], q[4])))
     return maximum(abs.(ε))
 end
 
@@ -58,17 +58,17 @@ end
 =#
 
 function TEST_euler123()
-    eul = [[-π + 2π*rand(); -π/2 + π*rand(); -π + 2π*rand()] for _ in 1:10_000]
-    seq = [1, 2, 3]
-    eult = q_toEuler.(q_fromEuler.(eul, Ref(seq)), Ref(seq))
+    seq = :xyz
+    eul = [[-π + 2π*rand(), -π/2 + π*rand(), -π + 2π*rand()] for _ in 1:10_000]
+    eult = [collect(q_toEuler(q_fromEuler(ek..., seq), seq)) for ek in eul]
     return maximum(norm.(eul - eult))
 end
 
 function TEST_euler321()
-    eul = [[-π + 2π*rand(); -π/2 + π*rand(); -π + 2π*rand()] for _ in 1:10_000]
-    seq = [3, 2, 1]
-    eult = q_toEuler.(q_fromEuler.(eul, Ref(seq)), Ref(seq))
-    return maximum(norm.(eul - eult))
+    seq = :zyx
+    eul = [[-π + 2π*rand(), -π/2 + π*rand(), -π + 2π*rand()] for _ in 1:10_000]
+    eult = [collect(q_toEuler(q_fromEuler(ek..., seq), seq)) for ek in eul]
+    return maximum([norm(eul[k] - eult[k]) for k in eachindex(eul)])
 end
 
 function TEST_cross()

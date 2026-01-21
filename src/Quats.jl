@@ -38,6 +38,7 @@ export q_multiply,
     q_transpose!,
     q_transformVector!,
     q_multiply!,
+    q_multiplyn!,
     q_toDcm!,
     q_fromDcm!,
     q_attitudeError!,
@@ -51,7 +52,8 @@ export q_multiply,
     q_transformVectorT!,
     q_multiplyT1!,
     q_multiplyT2!,
-    q_multiplyT12!
+    q_multiplyT12!,
+    q_fromSequence
 include("q.jl")
 #include("q_static.jl")
 
