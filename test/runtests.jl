@@ -31,8 +31,13 @@ end
 
 function TEST_mult()
     q = [q_random() for _ in 1:4]
-    ε = q_multiplyn(q...) - q_multiply(q[1], q_multiply(q[2], q_multiply(q[3], q[4])))
-    return maximum(abs.(ε))
+    qTrue = q_multiply(q[1], q_multiply(q[2], q_multiply(q[3], q[4])))
+    qOut = q_random()
+
+    err1 = q_multiplyn(q...) - qTrue
+    q_multiplyn!(qOut, q...)
+    err2 = qOut - qTrue
+    return max(maximum(abs, err1), maximum(abs, err2))
 end
 
 #=

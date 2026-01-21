@@ -112,9 +112,9 @@ R_{AB}(q_{AB}) = I + 2qₛ[qᵥ×] + 2[qᵥ×]²
 ```
 """
 @inline function q_toDcm(q_AB)
-    R_BA = Matrix{Float64}(undef, 3, 3)
-    q_toDcm!(R_BA, q_AB)
-    return R_BA
+    R_AB = Matrix{Float64}(undef, 3, 3)
+    q_toDcm!(R_AB, q_AB)
+    return R_AB
 end
 
 @inline function q_toDcm(q_AB::SVector{4, T}) where {T}
@@ -163,17 +163,18 @@ Translate the input rotation matrix into a unitary quaternion.
 end
 
 @inline function q_fromDcm!(q_AB, R_AB)
-    r11, r21, r31, r12, r22, r32, r13, r23, r33 = R_AB
+    r11, r12, r13, r21, r22, r23, r31, r32, r33 = R_AB
     q_AB[1], q_AB[2], q_AB[3], q_AB[4] = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
     return nothing
 end
 
 @inline function q_fromDcm(R_AB::SMatrix{3, 3, T}) where {T}
-    r11, r21, r31, r12, r22, r32, r13, r23, r33 = R_AB
+    r11, r12, r13, r21, r22, r23, r31, r32, r33 = R_AB
     qs, qx, qy, qz = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
     return SVector{3, T}(qs, qx, qy, qz)
 end
 
+# R_BA to q_AB
 @inline function q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
     vmax = 1 + r11 - r22 - r33
     v2 = 1 - r11 + r22 - r33
@@ -198,25 +199,25 @@ end
     f = 0.25/qq
 
     if idx == 1
-        qs = f*(r32 - r23)
+        qs = f*(r23 - r32)
         qx = qq
         qy = f*(r12 + r21)
         qz = f*(r31 + r13)
     elseif idx == 2
-        qs = f*(r13 - r31)
+        qs = f*(r31 - r13)
         qx = f*(r12 + r21)
         qy = qq
         qz = f*(r23 + r32)
     elseif idx == 3
-        qs = f*(r21 - r12)
+        qs = f*(r12 - r21)
         qx = f*(r31 + r13)
         qy = f*(r23 + r32)
         qz = qq
     else
         qs = qq
-        qx = f*(r32 - r23)
-        qy = f*(r13 - r31)
-        qz = f*(r21 - r12)
+        qx = f*(r23 - r32)
+        qy = f*(r31 - r13)
+        qz = f*(r12 - r21)
     end
     return qs, qx, qy, qz
 end
