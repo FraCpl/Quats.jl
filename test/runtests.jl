@@ -56,14 +56,14 @@ function TEST_qFromDcm()
     qTrue = q_random()
     Rtrue = q_toDcm(qTrue)
     q = q_fromDcm(Rtrue)
-    return norm(q - qTrue)
+    return norm(q - sign(q[1]*qTrue[1])*qTrue)
 end
 
 function TEST_qTransformVector()
     q = q_random()
     v = randn(3)
     u = q_transformVector(q, v)
-    uTrue = q_multiplyn(q, [0; v], q_transpose(q))[2:4]
+    uTrue = q_multiplyn(q, [0.0; v], q_transpose(q))[2:4]
     return norm(u - uTrue)
 end
 
