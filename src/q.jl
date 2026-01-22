@@ -123,14 +123,13 @@ end
     return SMatrix{3, 3, T}(R11, R21, R31, R12, R22, R32, R13, R23, R33)
 end
 
-@inline function q_toDcm!(R_AB, q_AB)     # R_BA from q_BA
-    # qx = crossMat(q[2:4])
-    # return I + 2.0*(qx*qx + q[1].*qx)
+@inline function q_toDcm!(R_AB, q_AB)     # R_AB from q_AB
     qs, qx, qy, qz = q_AB
     R_AB[1, 1], R_AB[2, 1], R_AB[3, 1], R_AB[1, 2], R_AB[2, 2], R_AB[3, 2], R_AB[1, 3], R_AB[2, 3], R_AB[3, 3] = q_toDcmCore(qs, qx, qy, qz)
     return nothing
 end
 
+# R_AB from q_AB
 function q_toDcmCore(qs, qx, qy, qz)
     x2, y2, z2 = qx + qx, qy + qy, qz + qz
     sx, sy, sz = qs*x2, qs*y2, qs*z2
@@ -532,20 +531,74 @@ end
 function q_toEuler(q, ::Val{:xyz})
     qs, qx, qy, qz = q
 
-    sinPitch = 2 * (qx*qz + qy*qs)
-    mask = sinPitch ≥ 1 - 10*eps() || sinPitch ≤ -1 + 10*eps()
-    sinPitch = max(-1.0, min(sinPitch, 1.0))
-    θy = asin(sinPitch)
-    if mask
-        θx = 0
-        θz = sign(sinPitch)*2*atan(qx, qs)
+    t2 = 2 * (qx*qz + qy*qs)
+    t2 = clamp(t2, -1.0, 1.0)
+    θy = asin(t2)
+
+    if abs(t2) ≥ 1 - 10*eps(eltype(q))
+        θx = zero(t2)
+        θz = sign(t2)*2*atan(qx, qs)
     else
-        θx = atan(-2 * (qy*qz - qx*qs), qs^2 - qx^2 - qy^2 + qz^2);
-        θz = atan(-2 * (qx*qy - qz*qs), qs^2 + qx^2 - qy^2 - qz^2)
+        θx = atan(2 * (qx*qs - qy*qz), qs^2 - qx^2 - qy^2 + qz^2)
+        θz = atan(2 * (qz*qs - qx*qy), qs^2 + qx^2 - qy^2 - qz^2)
     end
 
     return θx, θy, θz
 end
+
+@inline function q_toEuler(q, ::Val{:xzy})
+    qs, qx, qy, qz = q
+
+    t2 = 2 * (qs * qz - qx * qy)
+    t2 = clamp(t2, -1.0, 1.0)
+    θz = asin(t2)
+
+    if abs(t2) ≥ 1 - 10*eps(eltype(q))
+        θx = zero(t2)
+        θy = sign(t2)*2*atan(qx, qs)
+    else
+        θx = atan(2 * (qx*qs + qy*qz), 1 - 2*(qx^2 + qz^2))
+        θy = atan(2 * (qy*qs + qx*qz), 1 - 2*(qy^2 + qz^2))
+    end
+
+    return θx, θz, θy
+end
+
+@inline function q_toEuler(q, ::Val{:yxz})
+    qs, qx, qy, qz = q
+
+    t2 = 2*(qs*qx - qy*qz)
+    t2 = clamp(t2, -1.0, 1.0)
+    θx = asin(t2)
+
+    if abs(t2) ≥ 1 - 10*eps(eltype(q))
+        θy = zero(t2)
+        θz = sign(t2)*2*atan(qy, qs)
+    else
+        θy = atan(2*(qy*qs + qx*qz), 1 - 2*(qx^2 + qy^2))
+        θz = atan(2*(qz*qs + qx*qy), 1 - 2*(qx^2 + qz^2))
+    end
+
+    return θy, θx, θz
+end
+
+# @inline function q_toEuler(q, ::Val{:yzx})
+#     qs, qx, qy, qz = q
+
+#     t2 = 2*(qy*qx + qs*qz)
+#     t2 = clamp(t2, -1.0, 1.0)
+#     θz = asin(t2)
+
+#     if abs(t2) ≥ 1 - 10*eps(eltype(q))
+#         θy = zero(t2)
+#         θx = sign(t2)*2*atan(qy, qs)
+#     else
+#         θy = atan(-2*(qx*qz - qs*qy), 1 - 2*(qy^2 + qz^2))
+#         θx = atan(-2*(qx*qy - qs*qx), 1 - 2*(qx^2 + qz^2))
+#     end
+
+#     return θy, θz, θx
+# end
 
 @inline q_fromEuler(θ1, θ2, θ3, s::Symbol=:zyx) = q_fromEuler(θ1, θ2, θ3, Val(s))
 @inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyz}) = q_fromSequence((θ1, θ2, θ3), (1, 2, 3))

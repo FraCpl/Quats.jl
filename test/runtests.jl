@@ -29,7 +29,7 @@ function TEST_rots()
     return ε
 end
 
-function TEST_mult()
+function TEST_qMultiplyn()
     q = [q_random() for _ in 1:4]
     qTrue = q_multiply(q[1], q_multiply(q[2], q_multiply(q[3], q[4])))
     qOut = q_random()
@@ -38,6 +38,41 @@ function TEST_mult()
     q_multiplyn!(qOut, q...)
     err2 = qOut - qTrue
     return max(maximum(abs, err1), maximum(abs, err2))
+end
+
+function TEST_qMultiply()
+    p = q_random()
+    q = q_random()
+
+    ps = p[1]; pv = p[2:4]
+    qs = q[1]; qv = q[2:4]
+
+    pq = q_multiply(p, q)
+    pqTrue = [ps*qs - dot(pv, qv); ps*qv + qs*pv + cross(pv, qv)]
+    return norm(pq - pqTrue)
+end
+
+function TEST_qFromDcm()
+    qTrue = q_random()
+    Rtrue = q_toDcm(qTrue)
+    q = q_fromDcm(Rtrue)
+    return norm(q - qTrue)
+end
+
+function TEST_qTransformVector()
+    q = q_random()
+    v = randn(3)
+    u = q_transformVector(q, v)
+    uTrue = q_multiplyn(q, [0; v], q_transpose(q))[2:4]
+    return norm(u - uTrue)
+end
+
+function TEST_qDerivative()
+    q = q_random()
+    w = randn(3)
+    qDot = q_derivative(q, w)
+    qDotTrue = q_multiply(q, [0; w]) ./ 2
+    return norm(qDot - qDotTrue)
 end
 
 #=
@@ -76,13 +111,34 @@ function TEST_euler321()
     return maximum([norm(eul[k] - eult[k]) for k in eachindex(eul)])
 end
 
+function TEST_euler132()
+    seq = :xzy
+    eul = [[-π + 2π*rand(), -π/2 + π*rand(), -π + 2π*rand()] for _ in 1:10_000]
+    eult = [collect(q_toEuler(q_fromEuler(ek..., seq), seq)) for ek in eul]
+    return maximum([norm(eul[k] - eult[k]) for k in eachindex(eul)])
+end
+
+function TEST_euler213()
+    seq = :yxz
+    eul = [[-π + 2π*rand(), -π/2 + π*rand(), -π + 2π*rand()] for _ in 1:10_000]
+    eult = [collect(q_toEuler(q_fromEuler(ek..., seq), seq)) for ek in eul]
+    return maximum([norm(eul[k] - eult[k]) for k in eachindex(eul)])
+end
+
+# function TEST_euler231()
+#     seq = :yzx
+#     eul = [[-π + 2π*rand(), -π + 2π*rand(), -π/2 + π*rand()] for _ in 1:10_000]
+#     eult = [collect(q_toEuler(q_fromEuler(ek..., seq), seq)) for ek in eul]
+#     return maximum([norm(eul[k] - eult[k]) for k in eachindex(eul)])
+# end
+
 function TEST_cross()
     a = randn(3)
     b = randn(3)
     x = zeros(3)
-    @time cross!(x, a, b)
+    cross!(x, a, b)
     err1 = norm(x - cross(a, b))
-    @time crossSq!(x, a, b)
+    crossSq!(x, a, b)
     err2 = norm(x - cross(a, cross(a, b)))
     return maximum([err1; err2])
 end
@@ -95,13 +151,29 @@ function TEST_qtoxyz()
     return maximum([ex; ey; ez])
 end
 
+function TEST_qToDcm()
+    q = q_random()
+    R = q_toDcm(q)
+    qvx = crossMat(q[2:4])
+    Rtrue = I + 2*q[1].*qvx + 2*qvx*qvx
+    return norm(R*Rtrue' - I)
+end
+
 @testset "Quats.jl" begin
     ERR_TOL = 1e-10
     @test TEST_rots() < ERR_TOL
-    @test TEST_mult() < ERR_TOL
+    @test TEST_qMultiply() < ERR_TOL
+    @test TEST_qMultiplyn() < ERR_TOL
     @test TEST_euler123() < ERR_TOL
     @test TEST_euler321() < ERR_TOL
+    @test TEST_euler132() < ERR_TOL
+    @test TEST_euler213() < ERR_TOL
+    # @test TEST_euler231() < ERR_TOL
     @test TEST_cross() < ERR_TOL
     #@test TEST_kin() < ERR_TOL
     @test TEST_qtoxyz() < ERR_TOL
+    @test TEST_qToDcm() < ERR_TOL
+    @test TEST_qFromDcm() < ERR_TOL
+    @test TEST_qTransformVector() < ERR_TOL
+    @test TEST_qDerivative() < ERR_TOL
 end
