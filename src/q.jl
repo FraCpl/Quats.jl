@@ -401,6 +401,21 @@ function q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
     return dqs, dqx, dqy, dqz
 end
 
+@inline function q_rotx(θ)
+    sθ, cθ = sincos(θ/2)
+    return [cθ; sθ; 0.0; 0.0]
+end
+
+@inline function q_roty(θ)
+    sθ, cθ = sincos(θ/2)
+    return [cθ; 0.0; sθ; 0.0]
+end
+
+@inline function q_rotz(θ)
+    sθ, cθ = sincos(θ/2)
+    return [cθ; 0.0; 0.0; sθ]
+end
+
 """
     q_AB = q_fromAxisAngle(u, θ_AB)
 

@@ -53,7 +53,10 @@ export q_multiply,
     q_multiplyT1!,
     q_multiplyT2!,
     q_multiplyT12!,
-    q_fromSequence
+    q_fromSequence,
+    q_rotx,
+    q_roty,
+    q_rotz
 include("q.jl")
 #include("q_static.jl")
 
