@@ -70,7 +70,10 @@ export dcm_random,
     dcm_fromEuler,
     dcm_fromAxes,
     dcm_rotAxis,
-    dcm_normalize
+    dcm_normalize,
+    dcm_rotx,
+    dcm_roty,
+    dcm_rotz
 include("dcm.jl")
 
 export rv_toQuaternion, rv_fromQuaternion, rv_derivative, rv_fromDcm, rv_toDcm

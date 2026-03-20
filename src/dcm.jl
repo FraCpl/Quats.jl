@@ -74,12 +74,26 @@ end
 
 # R_AB(θ_AB)
 @inline function dcm_rotAxis(angle, axis::Int)
-    sθ, cθ = sincos(angle)
     if axis == 1
-        return [1 0 0; 0 cθ -sθ; 0 sθ cθ]
+        return dcm_rotx(angle)
     elseif axis == 2
-        return [cθ 0 sθ; 0 1 0; -sθ 0 cθ]
+        return dcm_roty(angle)
     end
+    return dcm_rotz(angle)
+end
+
+function dcm_rotx(angle)
+    sθ, cθ = sincos(angle)
+    return [1 0 0; 0 cθ -sθ; 0 sθ cθ]
+end
+
+function dcm_roty(angle)
+    sθ, cθ = sincos(angle)
+    return [cθ 0 sθ; 0 1 0; -sθ 0 cθ]
+end
+
+function dcm_rotz(angle)
+    sθ, cθ = sincos(angle)
     return [cθ -sθ 0; sθ cθ 0; 0 0 1]
 end
 

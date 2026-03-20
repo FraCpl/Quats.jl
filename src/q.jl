@@ -7,7 +7,7 @@ q_{AC} = q_{AB} ⊗ q_{BC}
 ```
 """
 @inline function q_multiply(q_AB, q_BC)
-    q_AC = similar(q_AB)
+    q_AC = Vector{eltype(q_AB)}(undef, 4)
     q_multiply!(q_AC, q_AB, q_BC)
     return q_AC
 end
@@ -81,9 +81,8 @@ end
 @inline function q_multiplyn(q...)
     qOut = copy(q[1])
     for i in 2:lastindex(q)
-        qOut = q_multiply(qOut, q[i])
+        q_multiply!(qOut, q[i])
     end
-
     return qOut
 end
 
@@ -92,7 +91,6 @@ function q_multiplyn!(qOut, q...)
     for i in 2:lastindex(q)
         q_multiply!(qOut, q[i])
     end
-
     return nothing
 end
 
@@ -112,7 +110,7 @@ R_{AB}(q_{AB}) = I + 2qₛ[qᵥ×] + 2[qᵥ×]²
 ```
 """
 @inline function q_toDcm(q_AB)
-    R_AB = Matrix{Float64}(undef, 3, 3)
+    R_AB = Matrix{eltype(q_AB)}(undef, 3, 3)
     q_toDcm!(R_AB, q_AB)
     return R_AB
 end
@@ -125,7 +123,9 @@ end
 
 @inline function q_toDcm!(R_AB, q_AB)     # R_AB from q_AB
     qs, qx, qy, qz = q_AB
-    R_AB[1, 1], R_AB[2, 1], R_AB[3, 1], R_AB[1, 2], R_AB[2, 2], R_AB[3, 2], R_AB[1, 3], R_AB[2, 3], R_AB[3, 3] = q_toDcmCore(qs, qx, qy, qz)
+    R_AB[1, 1], R_AB[2, 1], R_AB[3, 1],
+    R_AB[1, 2], R_AB[2, 2], R_AB[3, 2],
+    R_AB[1, 3], R_AB[2, 3], R_AB[3, 3] = q_toDcmCore(qs, qx, qy, qz)
     return nothing
 end
 
@@ -170,7 +170,7 @@ end
 @inline function q_fromDcm(R_AB::SMatrix{3, 3, T}) where {T}
     r11, r12, r13, r21, r22, r23, r31, r32, r33 = R_AB
     qs, qx, qy, qz = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
-    return SVector{3, T}(qs, qx, qy, qz)
+    return SVector{4, T}(qs, qx, qy, qz)
 end
 
 # R_BA to q_AB
@@ -402,18 +402,18 @@ function q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
 end
 
 @inline function q_rotx(θ)
-    sθ, cθ = sincos(θ/2)
-    return [cθ; sθ; 0.0; 0.0]
+    sθ, cθ = sincos(θ / 2)
+    return [cθ; sθ; 0; 0]
 end
 
 @inline function q_roty(θ)
-    sθ, cθ = sincos(θ/2)
-    return [cθ; 0.0; sθ; 0.0]
+    sθ, cθ = sincos(θ / 2)
+    return [cθ; 0; sθ; 0]
 end
 
 @inline function q_rotz(θ)
-    sθ, cθ = sincos(θ/2)
-    return [cθ; 0.0; 0.0; sθ]
+    sθ, cθ = sincos(θ / 2)
+    return [cθ; 0; 0; sθ]
 end
 
 """
@@ -424,8 +424,8 @@ Compute the unitary quaternion given as input an axis-angle representation.
 q_fromAxisAngle(u, θ) = iszero(u) ? q_identity() : [cos(0.5θ); sin(0.5θ)*normalize(u)]
 
 @inline function q_fromAxisAngle(idx::Int, θ)
-    sθ, cθ = sincos(θ/2)
-    q = [cθ; 0.0; 0.0; 0.0]
+    sθ, cθ = sincos(θ / 2)
+    q = [cθ; 0; 0; 0]
     q[idx + 1] = sθ
     return q
 end
@@ -485,7 +485,6 @@ end
     qs, qx, qy, qz = q
     nqv = sqrt(qx*qx + qy*qy + qz*qz)
     if nqv < 1e-10
-        ;
         return zeros(3);
     end
     nqv = 2atan(nqv, qs)/nqv
@@ -806,7 +805,7 @@ function q_testConvention(qp, q, p)
 
     # out = q*p
     function q_multiplyUniversal(q, p; scalarFirst=true, right=true)
-        qq = copy(q);
+        qq = copy(q)
         pp = copy(p)
         if !scalarFirst
             qq = [q[4]; q[1:3]]

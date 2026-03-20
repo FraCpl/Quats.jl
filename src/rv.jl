@@ -7,6 +7,6 @@
     # Bortz equation
     θ = norm(ϕ_AB)
     ϕxω = ϕ_AB × ωAB_B
-    k = 1/θ^2 - 0.5/θ/tan(θ)
-    return ωAB_B + 0.5 .* ϕxω + k .* (ϕ_AB × ϕxω)
+    k = 1/θ^2 - 1 / (2 * θ * tan(θ))
+    return ωAB_B + ϕxω ./ 2 + k .* (ϕ_AB × ϕxω)
 end
