@@ -406,14 +406,32 @@ end
     return [cθ; sθ; 0; 0]
 end
 
+@inline function q_rotx!(q, θ)
+    q[2], q[1] = sincos(θ / 2)
+    q[3] = q[4] = 0
+    return q
+end
+
 @inline function q_roty(θ)
     sθ, cθ = sincos(θ / 2)
     return [cθ; 0; sθ; 0]
 end
 
+@inline function q_roty!(q, θ)
+    q[3], q[1] = sincos(θ / 2)
+    q[2] = q[4] = 0
+    return q
+end
+
 @inline function q_rotz(θ)
     sθ, cθ = sincos(θ / 2)
     return [cθ; 0; 0; sθ]
+end
+
+@inline function q_rotz!(q, θ)
+    q[4], q[1] = sincos(θ / 2)
+    q[2] = q[3] = 0
+    return q
 end
 
 """

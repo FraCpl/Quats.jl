@@ -56,7 +56,10 @@ export q_multiply,
     q_fromSequence,
     q_rotx,
     q_roty,
-    q_rotz
+    q_rotz,
+    q_rotx!,
+    q_roty!,
+    q_rotz!
 include("q.jl")
 #include("q_static.jl")
 
