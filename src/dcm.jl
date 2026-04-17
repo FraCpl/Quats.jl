@@ -14,17 +14,12 @@ R_{AB}(θ_{AB}) = I + \\sin(θ_{AB})[u×] + (1 - \\cos(θ_{AB}))[u×]^2
 ```
 """
 @inline dcm_fromAxisAngle(u, θ) = q_toDcm(q_fromAxisAngle(u, θ))
-@inline dcm_fromAxisAngle(idx::Int, θ) = dcm_fromEuler([θ], [idx])
+@inline dcm_fromAxisAngle(idx::Int, θ) = dcm_fromSequence((θ,), (idx,))
 
-# θ = [θ_AB, θ_BC, θ_CD] --> R_AD
-function dcm_fromEuler(θ, sequence::Vector{Int}=[3, 2, 1])
-    R = dcm_rotAxis(θ[1], sequence[1])
-    for k in 2:lastindex(sequence)
-        R .= R*dcm_rotAxis(θ[k], sequence[k])
-    end
-    return R
-end
-@inline dcm_toEuler(R, sequence::Vector{Int}=[3, 2, 1]) = q_toEuler(q_fromDcm(R), sequence)
+# (θ1=θ_AB, θ2=θ_BC, θ3=θ_CD) --> R_AD
+@inline dcm_fromEuler(θ1, θ2, θ3, s::Symbol=:zyx) = q_toDcm(q_fromEuler(θ1, θ2, θ3, s))
+@inline dcm_fromSequence(θ, sequence=(3, 2, 1)) = q_toDcm(q_fromSequence(θ, sequence))
+@inline dcm_toEuler(R, s::Symbol=:zyx) = q_toEuler(q_fromDcm(R), s)
 
 """
     q_AB = dcm_toQuaternion(R_AB)
@@ -55,22 +50,7 @@ end
 
 Compute the transformation matrix given as input the axes of a reference frame.
 """
-@inline function dcm_fromAxes(xB_A, yB_A, zB_A)
-    if isempty(xB_A)
-        ;
-        xB_A = yB_A × zB_A;
-    end
-    if isempty(yB_A)
-        ;
-        yB_A = zB_A × xB_A;
-    end
-    if isempty(zB_A)
-        ;
-        zB_A = xB_A × yB_A;
-    end
-
-    return [xB_A yB_A zB_A] # R_AB
-end
+@inline dcm_fromAxes(xB_A, yB_A, zB_A) = [xB_A yB_A zB_A] # R_AB
 
 # R_AB(θ_AB)
 @inline function dcm_rotAxis(angle, axis::Int)

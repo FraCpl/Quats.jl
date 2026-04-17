@@ -453,7 +453,7 @@ function q_fromAxisAngle!(q, idx::Int, θ)
     q .= 0
     q[1] = cθ
     q[idx + 1] = sθ
-    return nothing
+    return q
 end
 
 function q_fromAxisAngle!(q, u, θ)
@@ -632,6 +632,7 @@ end
 #     return θy, θz, θx
 # end
 
+# (θ1=θ_AB, θ2=θ_BC, θ3=θ_CD) --> q_AD
 @inline q_fromEuler(θ1, θ2, θ3, s::Symbol=:zyx) = q_fromEuler(θ1, θ2, θ3, Val(s))
 @inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyz}) = q_fromSequence((θ1, θ2, θ3), (1, 2, 3))
 @inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzy}) = q_fromSequence((θ1, θ2, θ3), (1, 3, 2))
@@ -653,6 +654,7 @@ end
     end
     return q
 end
+
 
 """
     qe = q_exp(q)
