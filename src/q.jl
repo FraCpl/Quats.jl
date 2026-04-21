@@ -812,6 +812,13 @@ Compute the z axis of frame B projected in frame A.
     return nothing
 end
 
+function q_randomFromZaxis(zB_A)
+    zB_A = normalize(zB_A)
+    yB_A = normalize(cross(randn(3), zB_A))
+    xB_A = cross(yB_A, zB_A)
+    return q_fromAxes(xB_A, yB_A, zB_A)
+end
+
 # This function determines the convention used by a quaternion multiplication function in
 # terms of: 1) Scalar-first or scalar-last, 2) Right-handed or left-handed algebra
 # The multiplication function shall provide q*p = fmult(q, p)
