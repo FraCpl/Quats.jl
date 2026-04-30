@@ -22,10 +22,7 @@ end
     return SMatrix{3, 3}(o, z, -y, -z, o, x, y, -x, o)
 end
 
-@inline function crossMat!(R, v)
-    crossMat!(R, v[1], v[2], v[3])
-    return nothing
-end
+@inline crossMat!(R, v) = crossMat!(R, v[1], v[2], v[3])
 
 @inline function crossMat!(R, x, y, z)
     R[1, 1] = 0
@@ -37,7 +34,7 @@ end
     R[3, 1] = -y
     R[3, 2] = +x
     R[3, 3] = 0
-    return nothing
+    return R
 end
 
 # @inline function crossMat(v::SVector{3, T}) where T
@@ -68,14 +65,10 @@ Compute the squared cross product matrix of a vector ```v```.
 """
 @inline function crossMatSq(v)
     R = Matrix{eltype(v)}(undef, 3, 3)
-    crossMatSq!(R, v[1], v[2], v[3])
-    return R
+    return crossMatSq!(R, v[1], v[2], v[3])
 end
 
-@inline function crossMatSq!(R, v)
-    crossMatSq!(R, v[1], v[2], v[3])
-    return nothing
-end
+@inline crossMatSq!(R, v) = crossMatSq!(R, v[1], v[2], v[3])
 
 @inline function crossMatSq!(R, x, y, z)
     R[1, 1] = -y*y - z*z
@@ -87,7 +80,7 @@ end
     R[2, 1] = R[1, 2]
     R[3, 1] = R[1, 3]
     R[3, 2] = R[2, 3]
-    return nothing
+    return R
 end
 
 @inline function crossMatSq(v::SVector{3, T}) where {T}
@@ -124,7 +117,7 @@ Compute a = b × c.
     a[1] = -b[3]*c[2] + b[2]*c[3]
     a[2] = +b[3]*c[1] - b[1]*c[3]
     a[3] = -b[2]*c[1] + b[1]*c[2]
-    return nothing
+    return a
 end
 
 """
@@ -136,7 +129,7 @@ Compute a += b × c.
     a[1] += -b[3]*c[2] + b[2]*c[3]
     a[2] += +b[3]*c[1] - b[1]*c[3]
     a[3] += -b[2]*c[1] + b[1]*c[2]
-    return nothing
+    return a
 end
 
 """
@@ -150,7 +143,7 @@ Compute a = b × (b × c).
     a[1] = (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
     a[2] = (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
     a[3] = (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
-    return nothing
+    return a
 end
 
 """
@@ -164,5 +157,5 @@ Compute a += b × (b × c).
     a[1] += (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
     a[2] += (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
     a[3] += (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
-    return nothing
+    return a
 end

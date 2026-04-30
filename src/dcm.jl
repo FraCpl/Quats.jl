@@ -52,6 +52,15 @@ Compute the transformation matrix given as input the axes of a reference frame.
 """
 @inline dcm_fromAxes(xB_A, yB_A, zB_A) = [xB_A yB_A zB_A] # R_AB
 
+@inline function dcm_fromAxes!(R_AB, xB_A, yB_A, zB_A)
+    @inbounds for i in 1:3
+        R_AB[i, 1] = xB_A[i]
+        R_AB[i, 2] = yB_A[i]
+        R_AB[i, 3] = zB_A[i]
+    end
+    return R_AB
+end
+
 # R_AB(θ_AB)
 @inline function dcm_rotAxis(angle, axis::Int)
     if axis == 1

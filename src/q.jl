@@ -239,7 +239,7 @@ end
     r21, r22, r23 = yB_A
     r31, r32, r33 = zB_A
     q_AB[1], q_AB[2], q_AB[3], q_AB[4] = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
-    return nothing
+    return q_AB
 end
 
 """
@@ -296,7 +296,7 @@ Project the vector v from frame B into frame A.
     qs, qx, qy, qz = q_AB
     x, y, z = v_B
     v_A[1], v_A[2], v_A[3] = q_transformVectorCore(qs, qx, qy, qz, x, y, z)
-    return nothing
+    return v_A
 end
 
 """
@@ -308,7 +308,7 @@ Project the vector v from frame B into frame A, using q_BA.
     qs, qx, qy, qz = q_BA
     x, y, z = v_B
     v_A[1], v_A[2], v_A[3] = q_transformVectorCore(qs, -qx, -qy, -qz, x, y, z)
-    return nothing
+    return v_A
 end
 
 @inline function q_transformVectorCore(qs, qx, qy, qz, x, y, z)
@@ -333,7 +333,7 @@ Transpose the input quaternion.
 """
 function q_transpose!(q)
     q[2], q[3], q[4] = -q[2], -q[3], -q[4]
-    return nothing
+    return q
 end
 
 @inline q_transpose(q) = [q[1]; -q[2]; -q[3]; -q[4]]
@@ -342,7 +342,7 @@ end
 
 function q_transpose!(qt, q)
     qt[1], qt[2], qt[3], qt[4] = q[1], -q[2], -q[3], -q[4]
-    return nothing
+    return qt
 end
 
 
@@ -361,8 +361,7 @@ frame ``A``, projected into frame ``B``.
 """
 @inline function q_derivative(q_AB, ωAB_B)
     dq_AB = similar(q_AB)
-    q_derivative!(dq_AB, q_AB, ωAB_B)
-    return dq_AB
+    return q_derivative!(dq_AB, q_AB, ωAB_B)
 end
 
 @inline function q_derivative(q_AB::SVector{4, T}, ωAB_B::SVector{3, T}) where {T}
@@ -390,7 +389,7 @@ frame ``A``, projected into frame ``B``.
     qs, qx, qy, qz = q_AB
     wx, wy, wz = ωAB_B
     dq_AB[1], dq_AB[2], dq_AB[3], dq_AB[4] = q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
-    return nothing
+    return dq_AB
 end
 
 function q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
@@ -465,7 +464,7 @@ function q_fromAxisAngle!(q, u, θ)
     if uNormSq == 0
         q .= 0.0
         q[1] = 1.0
-        return nothing
+        return q
     end
 
     st, q[1] = sincos(θ / 2)
@@ -473,7 +472,7 @@ function q_fromAxisAngle!(q, u, θ)
     @inbounds for i in 1:3
         q[i + 1] = st * u[i]
     end
-    return nothing
+    return q
 end
 
 @inline function q_toAxisAngle(q)
@@ -703,23 +702,22 @@ end
 
 # e.g., qNominal = qDes, q = qEst
 @inline function q_attitudeError(qNominal, q)
-    err = Vector{eltype(q)}(undef, 3)
-    q_attitudeError!(err, qNominal, q)
-    return err
+    θerr = Vector{eltype(q)}(undef, 3)
+    return q_attitudeError!(θerr, qNominal, q)
 end
 
-@inline function q_attitudeError!(err, qNominal, q)
+@inline function q_attitudeError!(θerr, qNominal, q)
     ps, px, py, pz = q
     qs, qx, qy, qz = qNominal
 
     imax = findmax(abs, qNominal)[2]
     sgn = sign(qNominal[imax]) == sign(q[imax]) ? 2.0 : -2.0
 
-    err[1] = (-px*qs + ps*qx + pz*qy - py*qz)*sgn
-    err[2] = (-py*qs - pz*qx + ps*qy + px*qz)*sgn
-    err[3] = (-pz*qs + py*qx - px*qy + ps*qz)*sgn
+    θerr[1] = (-px*qs + ps*qx + pz*qy - py*qz)*sgn
+    θerr[2] = (-py*qs - pz*qx + ps*qy + px*qz)*sgn
+    θerr[3] = (-pz*qs + py*qx - px*qy + ps*qz)*sgn
 
-    return nothing  # 2q_multiply(q_transpose(sgn*q), qNominal)[2:4]
+    return θerr  # 2q_multiply(q_transpose(sgn*q), qNominal)[2:4]
 end
 
 """
@@ -729,8 +727,7 @@ Compute the x axis of frame B projected in frame A.
 """
 @inline function q_tox(q_AB)
     out = Vector{eltype(q_AB)}(undef, 3)
-    q_tox!(out, q_AB)
-    return out
+    return q_tox!(out, q_AB)
 end
 
 """
@@ -740,8 +737,7 @@ Compute the y axis of frame B projected in frame A.
 """
 @inline function q_toy(q_AB)
     out = Vector{eltype(q_AB)}(undef, 3)
-    q_toy!(out, q_AB)
-    return out
+    return q_toy!(out, q_AB)
 end
 
 """
@@ -751,8 +747,7 @@ Compute the z axis of frame B projected in frame A.
 """
 @inline function q_toz(q_AB)
     out = Vector{eltype(q_AB)}(undef, 3)
-    q_toz!(out, q_AB)
-    return out
+    return q_toz!(out, q_AB)
 end
 
 """
@@ -771,7 +766,7 @@ Compute the x axis of frame B projected in frame A.
     xB_A[2] = 2(c2y + qs*qz)
     xB_A[3] = 2(c2z - qs*qy)
 
-    return nothing
+    return xB_A
 end
 
 """
@@ -790,7 +785,7 @@ Compute the y axis of frame B projected in frame A.
     yB_A[2] = 1.0 + 2(c2y)
     yB_A[3] = 2(c2z + qs*qx)
 
-    return nothing
+    return yB_A
 end
 
 """
@@ -809,7 +804,7 @@ Compute the z axis of frame B projected in frame A.
     zB_A[2] = 2(c2y - qs*qx)
     zB_A[3] = 1.0 + 2(c2z)
 
-    return nothing
+    return zB_A
 end
 
 function q_randomFromZaxis(zB_A)
