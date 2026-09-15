@@ -24,7 +24,7 @@ end
     ps, px, py, pz = q_AB
     qs, qx, qy, qz = q_BC
     q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
-    return nothing
+    return q_AC
 end
 
 # Auiliary multiplication functions: these are included to allow high-speed in-place
@@ -35,7 +35,7 @@ end
     ps, px, py, pz = q_BA
     qs, qx, qy, qz = q_BC
     q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, -px, -py, -pz, qs, qx, qy, qz)
-    return nothing
+    return q_AC
 end
 
 # Second term of multiplication is the transpose of the baseline one
@@ -43,7 +43,7 @@ end
     ps, px, py, pz = q_AB
     qs, qx, qy, qz = q_CB
     q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, px, py, pz, qs, -qx, -qy, -qz)
-    return nothing
+    return q_AC
 end
 
 # Both first and second terms of multiplication are the transpose of the baseline ones
@@ -51,7 +51,7 @@ end
     ps, px, py, pz = q_BA
     qs, qx, qy, qz = q_CB
     q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, -px, -py, -pz, qs, -qx, -qy, -qz)
-    return nothing
+    return q_AC
 end
 
 # q1 <- q1 * q2
@@ -59,7 +59,7 @@ end
     ps, px, py, pz = q1
     qs, qx, qy, qz = q2
     q1[1], q1[2], q1[3], q1[4] = q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
-    return nothing
+    return q1
 end
 
 # Core quaternion multiplication function, implementing p ⊗ q
@@ -91,7 +91,7 @@ function q_multiplyn!(qOut, q...)
     for i in 2:lastindex(q)
         q_multiply!(qOut, q[i])
     end
-    return nothing
+    return qOut
 end
 
 """
@@ -126,7 +126,7 @@ end
     R_AB[1, 1], R_AB[2, 1], R_AB[3, 1],
     R_AB[1, 2], R_AB[2, 2], R_AB[3, 2],
     R_AB[1, 3], R_AB[2, 3], R_AB[3, 3] = q_toDcmCore(qs, qx, qy, qz)
-    return nothing
+    return R_AB
 end
 
 # R_AB from q_AB
@@ -164,7 +164,7 @@ end
 @inline function q_fromDcm!(q_AB, R_AB)
     r11, r12, r13, r21, r22, r23, r31, r32, r33 = R_AB
     q_AB[1], q_AB[2], q_AB[3], q_AB[4] = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
-    return nothing
+    return q_AB
 end
 
 @inline function q_fromDcm(R_AB::SMatrix{3, 3, T}) where {T}
