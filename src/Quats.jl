@@ -4,6 +4,10 @@ module Quats
 using LinearAlgebra
 using StaticArrays
 
+const ex = [1.0, 0.0, 0.0]
+const ey = [0.0, 1.0, 0.0]
+const ez = [0.0, 0.0, 1.0]
+
 export crossMat, crossMat!, crossMatInv, crossMatSq, crossMatSq!
 export cross!, crossSq!, addCross!, addCrossSq!, crossMatStatic, crossMatSqStatic
 include("cross.jl")

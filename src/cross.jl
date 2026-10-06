@@ -123,7 +123,7 @@ end
 """
     addCross!(a, b, c)
 
-Compute a += b × c.
+Compute a = a + b × c.
 """
 @inline function addCross!(a, b, c)
     a[1] += -b[3]*c[2] + b[2]*c[3]
@@ -149,7 +149,7 @@ end
 """
     addCrossSq!(a, b, c)
 
-Compute a += b × (b × c).
+Compute a = a + b × (b × c).
 """
 @inline function addCrossSq!(a, b, c)
     b1, b2, b3 = b
