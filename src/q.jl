@@ -8,8 +8,7 @@ q_{AC} = q_{AB} ⊗ q_{BC}
 """
 @inline function q_multiply(q_AB, q_BC)
     q_AC = similar(q_AB)
-    q_multiply!(q_AC, q_AB, q_BC)
-    return q_AC
+    return q_multiply!(q_AC, q_AB, q_BC)
 end
 
 @inline function q_multiply(q_AB::SVector{4, T}, q_BC::SVector{4, T}) where {T}
@@ -303,6 +302,24 @@ end
     qs, qx, qy, qz = q_AB
     x, y, z = v_B
     return q_transformVectorCore(qs, qx, qy, qz, x, y, z)
+end
+
+@inline function q_transformVectorT(q_BA, v_B)
+    v_A = similar(v_B)
+    return q_transformVectorT!(v_A, q_BA, v_B)
+end
+
+@inline function q_transformVectorT(q_BA, v_B::Tuple{T, T, T}) where {T}
+    qs, qx, qy, qz = q_BA
+    x, y, z = v_B
+    return q_transformVectorCore(qs, -qx, -qy, -qz, x, y, z)
+end
+
+@inline function q_transformVectorT(q_BA::SVector{4, T}, v_B::SVector{3, T}) where {T}
+    qs, qx, qy, qz = q_BA
+    x, y, z = v_B
+    ox, oy, oz = q_transformVectorCore(qs, -qx, -qy, -qz, x, y, z)
+    return SVector{3, T}(ox, oy, oz)
 end
 
 """
