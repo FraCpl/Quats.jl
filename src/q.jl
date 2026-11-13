@@ -7,7 +7,7 @@ q_{AC} = q_{AB} ⊗ q_{BC}
 ```
 """
 @inline function q_multiply(q_AB, q_BC)
-    q_AC = Vector{eltype(q_AB)}(undef, 4)
+    q_AC = similar(q_AB)
     q_multiply!(q_AC, q_AB, q_BC)
     return q_AC
 end
@@ -17,6 +17,12 @@ end
     qs, qx, qy, qz = q_BC
     os, ox, oy, oz = q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
     return SVector{4, T}(os, ox, oy, oz)
+end
+
+@inline function q_multiply(q_AB::Tuple{T, T, T, T}, q_BC::Tuple{T, T, T, T}) where {T}
+    ps, px, py, pz = q_AB
+    qs, qx, qy, qz = q_BC
+    return q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
 end
 
 # Baseline in-place multiplication function
@@ -242,6 +248,14 @@ end
     return q_AB
 end
 
+@inline function q_fromAxes(xB_A::Tuple{T, T, T}, yB_A::Tuple{T, T, T}, zB_A::Tuple{T, T, T}) where {T}
+    r11, r12, r13 = xB_A
+    r21, r22, r23 = yB_A
+    r31, r32, r33 = zB_A
+    q_AB = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
+    return q_AB
+end
+
 """
     q_random()
 
@@ -283,6 +297,12 @@ end
     x, y, z = v_B
     ox, oy, oz = q_transformVectorCore(qs, qx, qy, qz, x, y, z)
     return SVector{3, T}(ox, oy, oz)
+end
+
+@inline function q_transformVector(q_AB, v_B::Tuple{T, T, T}) where {T}
+    qs, qx, qy, qz = q_AB
+    x, y, z = v_B
+    return q_transformVectorCore(qs, qx, qy, qz, x, y, z)
 end
 
 """
@@ -340,6 +360,8 @@ end
 
 @inline q_transpose(q::SVector{4,T}) where {T} = SVector{4, T}(q[1], -q[2], -q[3], -q[4])
 
+@inline q_transpose(q::Tuple{T, T, T, T}) where {T} = (q[1], -q[2], -q[3], -q[4])
+
 function q_transpose!(qt, q)
     qt[1], qt[2], qt[3], qt[4] = q[1], -q[2], -q[3], -q[4]
     return qt
@@ -369,6 +391,12 @@ end
     wx, wy, wz = ωAB_B
     os, ox, oy, oz = q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
     return SVector{4, T}(os, ox, oy, oz)
+end
+
+@inline function q_derivative(q_AB::Tuple{T, T, T, T}, ωAB_B) where {T}
+    qs, qx, qy, qz = q_AB
+    wx, wy, wz = ωAB_B
+    return q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
 end
 
 """
@@ -501,11 +529,17 @@ end
 @inline function q_toRv(q)
     qs, qx, qy, qz = q
     nqv = sqrt(qx*qx + qy*qy + qz*qz)
-    if nqv < 1e-10
-        return zeros(3);
-    end
-    nqv = 2atan(nqv, qs)/nqv
+    nqv < 1e-10 && return zeros(3)
+    nqv = 2 * atan(nqv, qs) / nqv
     return [qx*nqv; qy*nqv; qz*nqv]
+end
+
+@inline function q_toRv(q::Tuple{T, T, T}) where {T}
+    qs, qx, qy, qz = q
+    nqv = sqrt(qx*qx + qy*qy + qz*qz)
+    nqv < 1e-10 && return (0.0, 0.0, 0.0)
+    nqv = 2 * atan(nqv, qs) / nqv
+    return (qx*nqv, qy*nqv, qz*nqv)
 end
 
 @inline q_fromRv(ϕ) = q_fromAxisAngle(ϕ, norm(ϕ))
@@ -807,11 +841,9 @@ Compute the z axis of frame B projected in frame A.
     return zB_A
 end
 
-function q_randomFromZaxis(zB_A)
+function q_fromZaxis(zB_A)
     zB_A = normalize(zB_A)
-    yB_A = normalize(cross(randn(3), zB_A))
-    xB_A = cross(yB_A, zB_A)
-    return q_fromAxes(xB_A, yB_A, zB_A)
+    return q_fromDcm([nullspace(zB_A') zB_A])
 end
 
 # This function determines the convention used by a quaternion multiplication function in

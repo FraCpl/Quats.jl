@@ -9,7 +9,7 @@ const ey = [0.0, 1.0, 0.0]
 const ez = [0.0, 0.0, 1.0]
 
 export crossMat, crossMat!, crossMatInv, crossMatSq, crossMatSq!
-export cross!, crossSq!, addCross!, addCrossSq!, crossMatStatic, crossMatSqStatic
+export cross!, crossSq!, addCross!, addCrossSq!, crossMatStatic, crossMatSqStatic, crossSq
 include("cross.jl")
 
 export q_multiply,

@@ -146,6 +146,33 @@ Compute a = b × (b × c).
     return a
 end
 
+@inline function crossSq(b::V, c::Tuple{T, T, T}) where {V, T}
+    b1, b2, b3 = b
+    c1, c2, c3 = c
+    a1 = (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
+    a2 = (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
+    a3 = (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
+    return a1, a2, a3
+end
+
+@inline function crossSq(b::Tuple{T, T, T}, c::V) where {V, T}
+    b1, b2, b3 = b
+    c1, c2, c3 = c
+    a1 = (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
+    a2 = (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
+    a3 = (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
+    return a1, a2, a3
+end
+
+@inline function crossSq(b::Tuple{T, T, T}, c::Tuple{T, T, T}) where {T}
+    b1, b2, b3 = b
+    c1, c2, c3 = c
+    a1 = (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
+    a2 = (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
+    a3 = (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
+    return a1, a2, a3
+end
+
 """
     addCrossSq!(a, b, c)
 
