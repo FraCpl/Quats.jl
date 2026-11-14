@@ -37,9 +37,7 @@ Compute a transformation matrix from a quaternion.
 
 function dcm_fromRv(ϕ)
     θ = norm(ϕ)
-    if θ == 0.0
-        return Matrix(1.0I, 3, 3)
-    end
+    θ == 0.0 && return Matrix(1.0I, 3, 3)
     return dcm_fromAxisAngle(ϕ, θ)
 end
 
@@ -63,11 +61,8 @@ end
 
 # R_AB(θ_AB)
 @inline function dcm_rotAxis(angle, axis::Int)
-    if axis == 1
-        return dcm_rotx(angle)
-    elseif axis == 2
-        return dcm_roty(angle)
-    end
+    axis == 1 && return dcm_rotx(angle)
+    axis == 2 && return dcm_roty(angle)
     return dcm_rotz(angle)
 end
 

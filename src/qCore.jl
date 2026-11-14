@@ -56,31 +56,13 @@ function q_fromDcmCore(R)
         vmax = v4
     end
 
-    qq = 0.5 * sqrt(abs(vmax))
-    f = 0.25/qq
+    qq = sqrt(abs(vmax)) / 2
+    f = 0.25 / qq
 
-    if idx == 1
-        qs = f * (r32 - r23)
-        qx = qq
-        qy = f * (r12 + r21)
-        qz = f * (r31 + r13)
-    elseif idx == 2
-        qs = f * (r13 - r31)
-        qx = f * (r12 + r21)
-        qy = qq
-        qz = f * (r23 + r32)
-    elseif idx == 3
-        qs = f * (r21 - r12)
-        qx = f * (r31 + r13)
-        qy = f * (r23 + r32)
-        qz = qq
-    else
-        qs = -qq
-        qx = f * (r23 - r32)
-        qy = f * (r31 - r13)
-        qz = f * (r12 - r21)
-    end
-    return qs, qx, qy, qz
+    idx == 1 && return f * (r32 - r23), qq, f * (r12 + r21), f * (r31 + r13)
+    idx == 2 && return f * (r13 - r31), f * (r12 + r21), qq, f * (r23 + r32)
+    idx == 3 && return f * (r21 - r12), f * (r31 + r13), f * (r23 + r32), qq
+    return -qq, f * (r23 - r32), f * (r31 - r13), f * (r12 - r21)
 end
 
 # v_A from q_AB, v_B
@@ -108,7 +90,7 @@ end
 
 function q_inverseCore(q)
     qs, qx, qy, qz = q
-    nq2 = qs*qs + qx*qx + qy*qy + qz*qz
+    nq2 = qs * qs + qx * qx + qy * qy + qz * qz
     return qs / nq2, -qx / nq2, -qy / nq2, -qz / nq2
 end
 
@@ -123,10 +105,10 @@ function q_derivativeCore(q, w)
     return dqs, dqx, dqy, dqz
 end
 
-function q_toRvCore(q)
+@inline function q_toRvCore(q)
     qs, qx, qy, qz = q
     nqv = sqrt(qx*qx + qy*qy + qz*qz)
-    nqv < 1e-10 && return (0.0, 0.0, 0.0)
-    nqv = 2 * atan(nqv, qs) / nqv
-    return qx*nqv, qy*nqv, qz*nqv
+    iszero(nqv) && return zero(qx), zero(qy), zero(qz)
+    f = 2*atan(nqv, qs) / nqv
+    return f*qx, f*qy, f*qz
 end

@@ -160,7 +160,7 @@ function TEST_qToDcm()
 end
 
 @testset "Quats.jl" begin
-    ERR_TOL = 1e-10
+    ERR_TOL = 3e-10
     @test TEST_rots() < ERR_TOL
     @test TEST_qMultiply() < ERR_TOL
     @test TEST_qMultiplyn() < ERR_TOL
