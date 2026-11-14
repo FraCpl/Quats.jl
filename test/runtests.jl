@@ -3,7 +3,7 @@ using LinearAlgebra
 using Test
 
 function TEST_rots()
-    N = 100
+    N = 100000
     v_A = [randn(3) for _ in 1:N]
     vq_A = [[0.0; v_A[i]] for i in 1:N]
     R_BA = [dcm_random() for _ in 1:N]

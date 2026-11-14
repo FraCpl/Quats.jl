@@ -6,75 +6,17 @@ Mutliply the two input quaternions as follows:
 q_{AC} = q_{AB} ⊗ q_{BC}
 ```
 """
-@inline function q_multiply(q_AB, q_BC)
-    q_AC = similar(q_AB)
-    return q_multiply!(q_AC, q_AB, q_BC)
-end
-
-@inline function q_multiply(q_AB::SVector{4, T}, q_BC::SVector{4, T}) where {T}
-    ps, px, py, pz = q_AB
-    qs, qx, qy, qz = q_BC
-    os, ox, oy, oz = q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
-    return SVector{4, T}(os, ox, oy, oz)
-end
-
-@inline function q_multiply(q_AB::Tuple{T, T, T, T}, q_BC::Tuple{T, T, T, T}) where {T}
-    ps, px, py, pz = q_AB
-    qs, qx, qy, qz = q_BC
-    return q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
-end
-
-# Baseline in-place multiplication function
-@inline function q_multiply!(q_AC, q_AB, q_BC)
-    ps, px, py, pz = q_AB
-    qs, qx, qy, qz = q_BC
-    q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
-    return q_AC
-end
+@inline q_multiply(q_AB, q_BC) = collect(q_multiplyCore(q_AB, q_BC))
+@inline q_multiply(q_AB::SVector{4, T}, q_BC::SVector{4, T}) where {T} = SVector(q_multiplyCore(q_AB, q_BC))
+@inline q_multiply(q_AB::Tuple{T, T, T, T}, q_BC::Tuple{T, T, T, T}) where {T} = q_multiplyCore(q_AB, q_BC)
+@inline q_multiply!(q_AC, q_AB, q_BC) = q_AC .= q_multiplyCore(q_AB, q_BC)
+@inline q_multiply!(q1, q2) = q1 .= q_multiplyCore(q1, q2)      # q1 is modified in-place
 
 # Auiliary multiplication functions: these are included to allow high-speed in-place
 # multiplication operations without the need of allocating/computing a quaternion transpose
-
-# First term of multiplication is the transpose of the baseline one
-@inline function q_multiplyT1!(q_AC, q_BA, q_BC)
-    ps, px, py, pz = q_BA
-    qs, qx, qy, qz = q_BC
-    q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, -px, -py, -pz, qs, qx, qy, qz)
-    return q_AC
-end
-
-# Second term of multiplication is the transpose of the baseline one
-@inline function q_multiplyT2!(q_AC, q_AB, q_CB)
-    ps, px, py, pz = q_AB
-    qs, qx, qy, qz = q_CB
-    q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, px, py, pz, qs, -qx, -qy, -qz)
-    return q_AC
-end
-
-# Both first and second terms of multiplication are the transpose of the baseline ones
-@inline function q_multiplyT12!(q_AC, q_BA, q_CB)
-    ps, px, py, pz = q_BA
-    qs, qx, qy, qz = q_CB
-    q_AC[1], q_AC[2], q_AC[3], q_AC[4] = q_multiplyCore(ps, -px, -py, -pz, qs, -qx, -qy, -qz)
-    return q_AC
-end
-
-# q1 <- q1 * q2
-@inline function q_multiply!(q1, q2)
-    ps, px, py, pz = q1
-    qs, qx, qy, qz = q2
-    q1[1], q1[2], q1[3], q1[4] = q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
-    return q1
-end
-
-# Core quaternion multiplication function, implementing p ⊗ q
-@inline function q_multiplyCore(ps, px, py, pz, qs, qx, qy, qz)
-    os = ps*qs - px*qx - py*qy - pz*qz
-    ox = px*qs + ps*qx - pz*qy + py*qz
-    oy = py*qs + pz*qx + ps*qy - px*qz
-    oz = pz*qs - py*qx + px*qy + ps*qz
-    return os, ox, oy, oz
-end
+@inline q_multiplyT1!(q_AC, q_BA, q_BC) = q_AC .= q_multiplyCore(q_transposeCore(q_BA), q_BC)
+@inline q_multiplyT2!(q_AC, q_AB, q_CB) = q_AC .= q_multiplyCore(q_AB, q_transposeCore(q_CB))
+@inline q_multiplyT12!(q_AC, q_BA, q_CB) = q_AC .= q_transposeCore(q_multiplyCore(q_CB, q_BA))
 
 """
     q = q_multiplyn(q1, q2, q3, ...)
@@ -100,13 +42,6 @@ function q_multiplyn!(qOut, q...)
 end
 
 """
-    q_build(qs,qv)
-
-Build a quaternion from its scalar and vectorial components.
-"""
-@inline q_build(qs, qv) = [qs; qv]
-
-"""
     R_AB = q_toDcm(q_AB)
 
 Translate the input unitary quaternion into a transformation matrix.
@@ -116,43 +51,16 @@ R_{AB}(q_{AB}) = I + 2qₛ[qᵥ×] + 2[qᵥ×]²
 """
 @inline function q_toDcm(q_AB)
     R_AB = Matrix{eltype(q_AB)}(undef, 3, 3)
-    q_toDcm!(R_AB, q_AB)
-    return R_AB
+    return q_toDcm!(R_AB, q_AB)
 end
 
-@inline function q_toDcm(q_AB::SVector{4, T}) where {T}
-    qs, qx, qy, qz = q_AB
-    R11, R21, R31, R12, R22, R32, R13, R23, R33 = q_toDcmCore(qs, qx, qy, qz)
-    return SMatrix{3, 3, T}(R11, R21, R31, R12, R22, R32, R13, R23, R33)
-end
+@inline q_toDcm(q_AB::SVector{4, T}) where {T} = SMatrix{3, 3, T}(q_toDcmCore(q_AB))
 
 @inline function q_toDcm!(R_AB, q_AB)     # R_AB from q_AB
-    qs, qx, qy, qz = q_AB
     R_AB[1, 1], R_AB[2, 1], R_AB[3, 1],
     R_AB[1, 2], R_AB[2, 2], R_AB[3, 2],
-    R_AB[1, 3], R_AB[2, 3], R_AB[3, 3] = q_toDcmCore(qs, qx, qy, qz)
+    R_AB[1, 3], R_AB[2, 3], R_AB[3, 3] = q_toDcmCore(q_AB)
     return R_AB
-end
-
-# R_AB from q_AB
-function q_toDcmCore(qs, qx, qy, qz)
-    x2, y2, z2 = qx + qx, qy + qy, qz + qz
-    sx, sy, sz = qs*x2, qs*y2, qs*z2
-    xx, xy, xz = qx*x2, qx*y2, qx*z2
-    yy, yz, zz = qy*y2, qy*z2, qz*z2
-
-    R11 = 1 - (yy + zz)
-    R12 = xy - sz
-    R13 = xz + sy
-
-    R21 = xy + sz
-    R22 = 1 - (xx + zz)
-    R23 = yz - sx
-
-    R31 = xz - sy
-    R32 = yz + sx
-    R33 = 1 - (xx + yy)
-    return R11, R21, R31, R12, R22, R32, R13, R23, R33
 end
 
 """
@@ -160,71 +68,9 @@ end
 
 Translate the input rotation matrix into a unitary quaternion.
 """
-@inline function q_fromDcm(R_AB)
-    q_AB = Vector{eltype(R_AB)}(undef, 4)
-    q_fromDcm!(q_AB, R_AB)
-    return q_AB
-end
-
-@inline function q_fromDcm!(q_AB, R_AB)
-    r11, r12, r13, r21, r22, r23, r31, r32, r33 = R_AB
-    q_AB[1], q_AB[2], q_AB[3], q_AB[4] = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
-    return q_AB
-end
-
-@inline function q_fromDcm(R_AB::SMatrix{3, 3, T}) where {T}
-    r11, r12, r13, r21, r22, r23, r31, r32, r33 = R_AB
-    qs, qx, qy, qz = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
-    return SVector{4, T}(qs, qx, qy, qz)
-end
-
-# R_BA to q_AB
-@inline function q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
-    vmax = 1 + r11 - r22 - r33
-    v2 = 1 - r11 + r22 - r33
-    v3 = 1 - r11 - r22 + r33
-    v4 = 1 + r11 + r22 + r33
-
-    idx = 1
-    if v2 > vmax
-        idx = 2
-        vmax = v2
-    end
-    if v3 > vmax
-        idx = 3
-        vmax = v3
-    end
-    if v4 > vmax
-        idx = 4
-        vmax = v4
-    end
-
-    qq = 0.5*sqrt(abs(vmax))
-    f = 0.25/qq
-
-    if idx == 1
-        qs = f*(r23 - r32)
-        qx = qq
-        qy = f*(r12 + r21)
-        qz = f*(r31 + r13)
-    elseif idx == 2
-        qs = f*(r31 - r13)
-        qx = f*(r12 + r21)
-        qy = qq
-        qz = f*(r23 + r32)
-    elseif idx == 3
-        qs = f*(r12 - r21)
-        qx = f*(r31 + r13)
-        qy = f*(r23 + r32)
-        qz = qq
-    else
-        qs = qq
-        qx = f*(r23 - r32)
-        qy = f*(r31 - r13)
-        qz = f*(r12 - r21)
-    end
-    return qs, qx, qy, qz
-end
+@inline q_fromDcm(R_AB) = collect(q_fromDcmCore(R_AB))
+@inline q_fromDcm!(q_AB, R_AB) = q_AB .= q_fromDcmCore(R_AB)
+@inline q_fromDcm(R_AB::SMatrix{3, 3, T}) where {T} = SVector{4, T}(q_fromDcmCore(R_AB))
 
 """
     q_AB = q_fromAxes(xB_A, yB_A, zB_A)
@@ -235,24 +81,23 @@ Compute the attitude quaternion given as input the axes of a reference frame.
 
 @inline function q_fromAxes(xB_A, yB_A, zB_A)
     q_AB = Vector{eltype(yB_A)}(undef, 4)
-    q_fromAxes!(q_AB, xB_A, yB_A, zB_A)
-    return q_AB
+    return q_fromAxes!(q_AB, xB_A, yB_A, zB_A)
 end
 
 @inline function q_fromAxes!(q_AB, xB_A, yB_A, zB_A)
-    r11, r12, r13 = xB_A
-    r21, r22, r23 = yB_A
-    r31, r32, r33 = zB_A
-    q_AB[1], q_AB[2], q_AB[3], q_AB[4] = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
-    return q_AB
+    r11, r21, r31 = xB_A
+    r12, r22, r32 = yB_A
+    r13, r23, r33 = zB_A
+    R_AB = (r11, r21, r31, r12, r22, r32, r13, r23, r33)
+    return q_AB .= q_fromDcmCore(R_AB)
 end
 
 @inline function q_fromAxes(xB_A::Tuple{T, T, T}, yB_A::Tuple{T, T, T}, zB_A::Tuple{T, T, T}) where {T}
     r11, r12, r13 = xB_A
     r21, r22, r23 = yB_A
     r31, r32, r33 = zB_A
-    q_AB = q_fromDcmCore(r11, r12, r13, r21, r22, r23, r31, r32, r33)
-    return q_AB
+    R_AB = (r11, r21, r31, r12, r22, r32, r13, r23, r33)
+    return q_fromDcmCore(R_AB)
 end
 
 """
@@ -260,17 +105,8 @@ end
 
 Generate a random unitary quaternion.
 """
-@inline function q_random()
-    q = randn(4)
-    normalize!(q)
-    return q
-end
-
-@inline function q_random(rng)
-    q = randn(rng, 4)
-    normalize!(q)
-    return q
-end
+@inline q_random() = normalize!(randn(4))
+@inline q_random(rng) = normalize!(randn(rng), 4)
 
 """
     q_identity()
@@ -285,105 +121,31 @@ vector components equal to zero.
 
 Project the vector v from frame B into frame A.
 """
-@inline function q_transformVector(q_AB, v_B)
-    v_A = similar(v_B)
-    q_transformVector!(v_A, q_AB, v_B)
-    return v_A
-end
-
-@inline function q_transformVector(q_AB::SVector{4, T}, v_B::SVector{3, T}) where {T}
-    qs, qx, qy, qz = q_AB
-    x, y, z = v_B
-    ox, oy, oz = q_transformVectorCore(qs, qx, qy, qz, x, y, z)
-    return SVector{3, T}(ox, oy, oz)
-end
-
-@inline function q_transformVector(q_AB, v_B::Tuple{T, T, T}) where {T}
-    qs, qx, qy, qz = q_AB
-    x, y, z = v_B
-    return q_transformVectorCore(qs, qx, qy, qz, x, y, z)
-end
-
-@inline function q_transformVectorT(q_BA, v_B)
-    v_A = similar(v_B)
-    return q_transformVectorT!(v_A, q_BA, v_B)
-end
-
-@inline function q_transformVectorT(q_BA, v_B::Tuple{T, T, T}) where {T}
-    qs, qx, qy, qz = q_BA
-    x, y, z = v_B
-    return q_transformVectorCore(qs, -qx, -qy, -qz, x, y, z)
-end
-
-@inline function q_transformVectorT(q_BA::SVector{4, T}, v_B::SVector{3, T}) where {T}
-    qs, qx, qy, qz = q_BA
-    x, y, z = v_B
-    ox, oy, oz = q_transformVectorCore(qs, -qx, -qy, -qz, x, y, z)
-    return SVector{3, T}(ox, oy, oz)
-end
-
-"""
-    q_transformVector!(v_A, q_AB, v_B)
-
-Project the vector v from frame B into frame A.
-"""
-@inline function q_transformVector!(v_A, q_AB, v_B)
-    # qxv = q_AB[2:4] × v_B
-    # return v_B + 2.0*(q_AB[2:4] × qxv + q_AB[1].*qxv) # v_A
-    qs, qx, qy, qz = q_AB
-    x, y, z = v_B
-    v_A[1], v_A[2], v_A[3] = q_transformVectorCore(qs, qx, qy, qz, x, y, z)
-    return v_A
-end
+@inline q_transformVector(q_AB, v_B) = collect(q_transformVectorCore(q_AB, v_B))
+@inline q_transformVector(q_AB::SVector{4, T}, v_B::SVector{3, T}) where {T} = SVector{3, T}(q_transformVectorCore(q_AB, v_B))
+@inline q_transformVector(q_AB, v_B::Tuple{T, T, T}) where {T} = q_transformVectorCore(q_AB, v_B)
+@inline q_transformVector!(v_A, q_AB, v_B) = v_A .= q_transformVectorCore(q_AB, v_B)
 
 """
     q_transformVectorT!(v_A, q_BA, v_B)
 
 Project the vector v from frame B into frame A, using q_BA.
 """
-@inline function q_transformVectorT!(v_A, q_BA, v_B)
-    qs, qx, qy, qz = q_BA
-    x, y, z = v_B
-    v_A[1], v_A[2], v_A[3] = q_transformVectorCore(qs, -qx, -qy, -qz, x, y, z)
-    return v_A
-end
-
-@inline function q_transformVectorCore(qs, qx, qy, qz, x, y, z)
-    cx = qy*z - qz*y
-    cy = qz*x - qx*z
-    cz = qx*y - qy*x
-
-    c2x = qy*cz - qz*cy
-    c2y = qz*cx - qx*cz
-    c2z = qx*cy - qy*cx
-
-    xo = x + 2 * (c2x + qs*cx)
-    yo = y + 2 * (c2y + qs*cy)
-    zo = z + 2 * (c2z + qs*cz)
-    return xo, yo, zo
-end
+@inline q_transformVectorT(q_BA, v_B) = collect(q_transformVectorCore(q_transposeCore(q_BA), v_B))
+@inline q_transformVectorT(q_BA, v_B::Tuple{T, T, T}) where {T} = q_transformVectorCore(q_transposeCore(q_BA), v_B)
+@inline q_transformVectorT(q_BA::SVector{4, T}, v_B::SVector{3, T}) where {T} = SVector{3, T}(q_transformVectorCore(q_transposeCore(q_BA), v_B))
+@inline q_transformVectorT!(v_A, q_BA, v_B) = v_A .= q_transformVectorCore(q_transposeCore(q_BA), v_B)
 
 """
     q' = q_transpose(q)
 
 Transpose the input quaternion.
 """
-function q_transpose!(q)
-    q[2], q[3], q[4] = -q[2], -q[3], -q[4]
-    return q
-end
-
-@inline q_transpose(q) = [q[1]; -q[2]; -q[3]; -q[4]]
-
-@inline q_transpose(q::SVector{4,T}) where {T} = SVector{4, T}(q[1], -q[2], -q[3], -q[4])
-
-@inline q_transpose(q::Tuple{T, T, T, T}) where {T} = (q[1], -q[2], -q[3], -q[4])
-
-function q_transpose!(qt, q)
-    qt[1], qt[2], qt[3], qt[4] = q[1], -q[2], -q[3], -q[4]
-    return qt
-end
-
+@inline q_transpose(q) = collect(q_transposeCore(q))
+@inline q_transpose(q::SVector{4,T}) where {T} = SVector{4, T}(q_transposeCore(q))
+@inline q_transpose(q::Tuple{T, T, T, T}) where {T} = q_transposeCore(q)
+@inline q_transpose!(q) = q .= q_transposeCore(q)
+@inline q_transpose!(qt, q) = qt .= q_transposeCore(q)
 
 """
     q̇_AB = q_derivative(q_AB, ωAB_B)
@@ -398,52 +160,10 @@ q̇_{AB} = \\frac{1}{2} q_{AB} ⊗ [0; ω^B_{AB}]
 where ```ωAB_B``` represents the angular velocity of frame ``B`` with respect to
 frame ``A``, projected into frame ``B``.
 """
-@inline function q_derivative(q_AB, ωAB_B)
-    dq_AB = similar(q_AB)
-    return q_derivative!(dq_AB, q_AB, ωAB_B)
-end
-
-@inline function q_derivative(q_AB::SVector{4, T}, ωAB_B::SVector{3, T}) where {T}
-    qs, qx, qy, qz = q_AB
-    wx, wy, wz = ωAB_B
-    os, ox, oy, oz = q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
-    return SVector{4, T}(os, ox, oy, oz)
-end
-
-@inline function q_derivative(q_AB::Tuple{T, T, T, T}, ωAB_B) where {T}
-    qs, qx, qy, qz = q_AB
-    wx, wy, wz = ωAB_B
-    return q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
-end
-
-"""
-    q_derivative!(q̇_AB, q_AB, ωAB_B)
-
-Compute the time derivative of a unitary quaternion, given the corresponding
-angular velocity vector.
-
-Mathematically, this function performs the following operation:
-```math
-q̇_{AB} = \\frac{1}{2} q_{AB} ⊗ [0; ω^B_{AB}]
-```
-where ```ωAB_B``` represents the angular velocity of frame ``B`` with respect to
-frame ``A``, projected into frame ``B``.
-"""
-@inline function q_derivative!(dq_AB, q_AB, ωAB_B)
-    # q_multiply(q_AB, [0.0; 0.5.*ωAB_B])  # dq_BA
-    qs, qx, qy, qz = q_AB
-    wx, wy, wz = ωAB_B
-    dq_AB[1], dq_AB[2], dq_AB[3], dq_AB[4] = q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
-    return dq_AB
-end
-
-function q_derivativeCore(qs, qx, qy, qz, wx, wy, wz)
-    dqs = (-qx * wx - qy * wy - qz * wz) / 2
-    dqx = (qs * wx - qz * wy + qy * wz) / 2
-    dqy = (qz * wx + qs * wy - qx * wz) / 2
-    dqz = (-qy * wx + qx * wy + qs * wz) / 2
-    return dqs, dqx, dqy, dqz
-end
+@inline q_derivative(q_AB, ωAB_B) = collect(q_derivativeCore(q_AB, ωAB_B))
+@inline q_derivative(q_AB::SVector{4, T}, ωAB_B::SVector{3, T}) where {T} = SVector{4, T}(q_derivativeCore(q_AB, ωAB_B))
+@inline q_derivative(q_AB::Tuple{T, T, T, T}, ωAB_B) where {T} = q_derivativeCore(q_AB, ωAB_B)
+@inline q_derivative!(dq_AB, q_AB, ωAB_B) = dq_AB .= q_derivativeCore(q_AB, ωAB_B)
 
 @inline function q_rotx(θ)
     sθ, cθ = sincos(θ / 2)
@@ -537,30 +257,15 @@ end
 
 Compute the inverse of the input quaternion.
 """
-@inline function q_inverse(q)
-    qs, qx, qy, qz = q
-    nq2 = qs*qs + qx*qx + qy*qy + qz*qz
-    return [qs/nq2; -qx/nq2; -qy/nq2; -qz/nq2]
-end
+@inline q_inverse(q) = collect(q_inverseCore(q))
+@inline q_inverse(q::Tuple{T, T, T}) where {T} = q_inverseCore(q)
+@inline q_inverse(q::SVector{4, T}) where {T} = SVector{4, T}(q_inverseCore(q))
 
-@inline function q_toRv(q)
-    qs, qx, qy, qz = q
-    nqv = sqrt(qx*qx + qy*qy + qz*qz)
-    nqv < 1e-10 && return zeros(3)
-    nqv = 2 * atan(nqv, qs) / nqv
-    return [qx*nqv; qy*nqv; qz*nqv]
-end
-
-@inline function q_toRv(q::Tuple{T, T, T}) where {T}
-    qs, qx, qy, qz = q
-    nqv = sqrt(qx*qx + qy*qy + qz*qz)
-    nqv < 1e-10 && return (0.0, 0.0, 0.0)
-    nqv = 2 * atan(nqv, qs) / nqv
-    return (qx*nqv, qy*nqv, qz*nqv)
-end
+@inline q_toRv(q) = collect(q_toRvCore(q))
+@inline q_toRv(q::Tuple{T, T, T}) where {T} = q_toRvCore(q)
+@inline q_toRv(q::SVector{4, T}) where {T} = SVector{4, T}(q_toRvCore(q))
 
 @inline q_fromRv(ϕ) = q_fromAxisAngle(ϕ, norm(ϕ))
-
 @inline q_fromRv!(q, ϕ) = q_fromAxisAngle!(q, ϕ, norm(ϕ))
 
 """

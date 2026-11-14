@@ -12,6 +12,7 @@ export crossMat, crossMat!, crossMatInv, crossMatSq, crossMatSq!
 export cross!, crossSq!, addCross!, addCrossSq!, crossMatStatic, crossMatSqStatic, crossSq
 include("cross.jl")
 
+include("qCore.jl")
 export q_multiply,
     q_fromAxes,
     q_random,
@@ -25,7 +26,6 @@ export q_multiply,
     q_toAxes,
     q_toDcm,
     q_inverse,
-    q_build,
     q_identity,
     q_toRv,
     q_fromRv,
