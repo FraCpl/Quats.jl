@@ -93,4 +93,7 @@ include("dcm.jl")
 export rv_toQuaternion, rv_fromQuaternion, rv_derivative, rv_fromDcm, rv_toDcm
 include("rv.jl")
 
+export transformFrame
+include("transformFrame.jl")
+
 end

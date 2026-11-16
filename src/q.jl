@@ -9,8 +9,8 @@ q_{AC} = q_{AB} ⊗ q_{BC}
 @inline q_multiply(q_AB, q_BC) = collect(q_multiplyCore(q_AB, q_BC))
 @inline q_multiply(q_AB::SVector{4}, q_BC::SVector{4}) = SVector(q_multiplyCore(q_AB, q_BC))
 @inline q_multiply(q_AB::Quaternion, q_BC::Quaternion) = q_multiplyCore(q_AB, q_BC)
-@inline q_multiply(q_AB::Quaternion, q_BC) = q_multiplyCore(q_AB, q_BC)
-@inline q_multiply(q_AB, q_BC::Quaternion) = q_multiplyCore(q_AB, q_BC)
+@inline q_multiply(q_AB::Quaternion, q_BC::AbstractVector) = q_multiplyCore(q_AB, q_BC)
+@inline q_multiply(q_AB::AbstractVector, q_BC::Quaternion) = q_multiplyCore(q_AB, q_BC)
 @inline q_multiply!(q_AC, q_AB, q_BC) = q_AC .= q_multiplyCore(q_AB, q_BC)
 @inline q_multiply!(q1, q2) = q1 .= q_multiplyCore(q1, q2)      # q1 is modified in-place
 
@@ -57,6 +57,11 @@ R_{AB}(q_{AB}) = I + 2qₛ[qᵥ×] + 2[qᵥ×]²
 end
 
 @inline q_toDcm(q_AB::SVector{4}) = SMatrix{3, 3}(q_toDcmCore(q_AB))
+
+@inline function q_toDcm(q_AB::Quaternion)
+    r11, r21, r31, r12, r22, r32, r13, r23, r33 = q_toDcmCore(q_AB)
+    return [r11 r12 r13; r21 r22 r23; r31 r32 r33]
+end
 
 @inline function q_toDcm!(R_AB, q_AB)     # R_AB from q_AB
     R_AB[1, 1], R_AB[2, 1], R_AB[3, 1],
@@ -125,9 +130,10 @@ Project the vector v from frame B into frame A.
 """
 @inline q_transformVector(q_AB, v_B) = collect(q_transformVectorCore(q_AB, v_B))
 @inline q_transformVector(q_AB::SVector{4}, v_B::SVector{3}) = SVector{3}(q_transformVectorCore(q_AB, v_B))
-@inline q_transformVector(q_AB, v_B::Vector3) = q_transformVectorCore(q_AB, v_B)
+@inline q_transformVector(q_AB::AbstractVector, v_B::Vector3) = q_transformVectorCore(q_AB, v_B)
+@inline q_transformVector(q_AB::Quaternion, v_B::AbstractVector) = q_transformVectorCore(q_AB, v_B)
+@inline q_transformVector(q_AB::Quaternion, v_B::Vector3) = q_transformVectorCore(q_AB, v_B)
 @inline q_transformVector!(v_A, q_AB, v_B) = v_A .= q_transformVectorCore(q_AB, v_B)
-@inline q_transformVector(q_AB::Quaternion, v_B) = q_transformVectorCore(q_AB, v_B)
 
 """
     q_transformVectorT!(v_A, q_BA, v_B)
@@ -135,10 +141,11 @@ Project the vector v from frame B into frame A.
 Project the vector v from frame B into frame A, using q_BA.
 """
 @inline q_transformVectorT(q_BA, v_B) = collect(q_transformVectorCore(q_transposeCore(q_BA), v_B))
-@inline q_transformVectorT(q_BA, v_B::Vector3) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
+@inline q_transformVectorT(q_BA::AbstractVector, v_B::Vector3) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
+@inline q_transformVectorT(q_BA::Quaternion, v_B::AbstractVector) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
+@inline q_transformVectorT(q_BA::Quaternion, v_B::Vector3) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
 @inline q_transformVectorT(q_BA::SVector{4}, v_B::SVector{3}) = SVector{3}(q_transformVectorCore(q_transposeCore(q_BA), v_B))
 @inline q_transformVectorT!(v_A, q_BA, v_B) = v_A .= q_transformVectorCore(q_transposeCore(q_BA), v_B)
-@inline q_transformVectorT(q_BA::Quaternion, v_B) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
 
 """
     q' = q_transpose(q)

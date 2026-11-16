@@ -50,6 +50,8 @@ Compute the transformation matrix given as input the axes of a reference frame.
 """
 @inline dcm_fromAxes(xB_A, yB_A, zB_A) = [xB_A yB_A zB_A] # R_AB
 
+@inline dcm_fromAxes(xB_A::Vector3, yB_A::Vector3, zB_A::Vector3) = [xB_A[1] yB_A[1] zB_A[1]; xB_A[2] yB_A[2] zB_A[2]; xB_A[3] yB_A[3] zB_A[3]]
+
 @inline function dcm_fromAxes!(R_AB, xB_A, yB_A, zB_A)
     @inbounds for i in 1:3
         R_AB[i, 1] = xB_A[i]
