@@ -8,6 +8,10 @@ const ex = [1.0, 0.0, 0.0]
 const ey = [0.0, 1.0, 0.0]
 const ez = [0.0, 0.0, 1.0]
 
+export Vector3, Quaternion
+export dot3, cross3, mul3, mul3!, row3, col3, crossSq3
+include("math.jl")
+
 export crossMat, crossMat!, crossMatInv, crossMatSq, crossMatSq!
 export cross!, crossSq!, addCross!, addCrossSq!, crossMatStatic, crossMatSqStatic, crossSq
 include("cross.jl")

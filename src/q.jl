@@ -7,8 +7,10 @@ q_{AC} = q_{AB} ⊗ q_{BC}
 ```
 """
 @inline q_multiply(q_AB, q_BC) = collect(q_multiplyCore(q_AB, q_BC))
-@inline q_multiply(q_AB::SVector{4, T}, q_BC::SVector{4, T}) where {T} = SVector(q_multiplyCore(q_AB, q_BC))
-@inline q_multiply(q_AB::Tuple{T, T, T, T}, q_BC::Tuple{T, T, T, T}) where {T} = q_multiplyCore(q_AB, q_BC)
+@inline q_multiply(q_AB::SVector{4}, q_BC::SVector{4}) = SVector(q_multiplyCore(q_AB, q_BC))
+@inline q_multiply(q_AB::Quaternion, q_BC::Quaternion) = q_multiplyCore(q_AB, q_BC)
+@inline q_multiply(q_AB::Quaternion, q_BC) = q_multiplyCore(q_AB, q_BC)
+@inline q_multiply(q_AB, q_BC::Quaternion) = q_multiplyCore(q_AB, q_BC)
 @inline q_multiply!(q_AC, q_AB, q_BC) = q_AC .= q_multiplyCore(q_AB, q_BC)
 @inline q_multiply!(q1, q2) = q1 .= q_multiplyCore(q1, q2)      # q1 is modified in-place
 
@@ -54,7 +56,7 @@ R_{AB}(q_{AB}) = I + 2qₛ[qᵥ×] + 2[qᵥ×]²
     return q_toDcm!(R_AB, q_AB)
 end
 
-@inline q_toDcm(q_AB::SVector{4, T}) where {T} = SMatrix{3, 3, T}(q_toDcmCore(q_AB))
+@inline q_toDcm(q_AB::SVector{4}) = SMatrix{3, 3}(q_toDcmCore(q_AB))
 
 @inline function q_toDcm!(R_AB, q_AB)     # R_AB from q_AB
     R_AB[1, 1], R_AB[2, 1], R_AB[3, 1],
@@ -70,7 +72,7 @@ Translate the input rotation matrix into a unitary quaternion.
 """
 @inline q_fromDcm(R_AB) = collect(q_fromDcmCore(R_AB))
 @inline q_fromDcm!(q_AB, R_AB) = q_AB .= q_fromDcmCore(R_AB)
-@inline q_fromDcm(R_AB::SMatrix{3, 3, T}) where {T} = SVector{4, T}(q_fromDcmCore(R_AB))
+@inline q_fromDcm(R_AB::SMatrix{3, 3}) = SVector{4}(q_fromDcmCore(R_AB))
 
 """
     q_AB = q_fromAxes(xB_A, yB_A, zB_A)
@@ -92,7 +94,7 @@ end
     return q_AB .= q_fromDcmCore(R_AB)
 end
 
-@inline function q_fromAxes(xB_A::Tuple{T, T, T}, yB_A::Tuple{T, T, T}, zB_A::Tuple{T, T, T}) where {T}
+@inline function q_fromAxes(xB_A::Vector3, yB_A::Vector3, zB_A::Vector3)
     r11, r12, r13 = xB_A
     r21, r22, r23 = yB_A
     r31, r32, r33 = zB_A
@@ -122,9 +124,10 @@ vector components equal to zero.
 Project the vector v from frame B into frame A.
 """
 @inline q_transformVector(q_AB, v_B) = collect(q_transformVectorCore(q_AB, v_B))
-@inline q_transformVector(q_AB::SVector{4, T}, v_B::SVector{3, T}) where {T} = SVector{3, T}(q_transformVectorCore(q_AB, v_B))
-@inline q_transformVector(q_AB, v_B::Tuple{T, T, T}) where {T} = q_transformVectorCore(q_AB, v_B)
+@inline q_transformVector(q_AB::SVector{4}, v_B::SVector{3}) = SVector{3}(q_transformVectorCore(q_AB, v_B))
+@inline q_transformVector(q_AB, v_B::Vector3) = q_transformVectorCore(q_AB, v_B)
 @inline q_transformVector!(v_A, q_AB, v_B) = v_A .= q_transformVectorCore(q_AB, v_B)
+@inline q_transformVector(q_AB::Quaternion, v_B) = q_transformVectorCore(q_AB, v_B)
 
 """
     q_transformVectorT!(v_A, q_BA, v_B)
@@ -132,9 +135,10 @@ Project the vector v from frame B into frame A.
 Project the vector v from frame B into frame A, using q_BA.
 """
 @inline q_transformVectorT(q_BA, v_B) = collect(q_transformVectorCore(q_transposeCore(q_BA), v_B))
-@inline q_transformVectorT(q_BA, v_B::Tuple{T, T, T}) where {T} = q_transformVectorCore(q_transposeCore(q_BA), v_B)
-@inline q_transformVectorT(q_BA::SVector{4, T}, v_B::SVector{3, T}) where {T} = SVector{3, T}(q_transformVectorCore(q_transposeCore(q_BA), v_B))
+@inline q_transformVectorT(q_BA, v_B::Vector3) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
+@inline q_transformVectorT(q_BA::SVector{4}, v_B::SVector{3}) = SVector{3}(q_transformVectorCore(q_transposeCore(q_BA), v_B))
 @inline q_transformVectorT!(v_A, q_BA, v_B) = v_A .= q_transformVectorCore(q_transposeCore(q_BA), v_B)
+@inline q_transformVectorT(q_BA::Quaternion, v_B) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
 
 """
     q' = q_transpose(q)
@@ -142,8 +146,8 @@ Project the vector v from frame B into frame A, using q_BA.
 Transpose the input quaternion.
 """
 @inline q_transpose(q) = collect(q_transposeCore(q))
-@inline q_transpose(q::SVector{4,T}) where {T} = SVector{4, T}(q_transposeCore(q))
-@inline q_transpose(q::Tuple{T, T, T, T}) where {T} = q_transposeCore(q)
+@inline q_transpose(q::SVector{4}) = SVector{4}(q_transposeCore(q))
+@inline q_transpose(q::Quaternion) = q_transposeCore(q)
 @inline q_transpose!(q) = q .= q_transposeCore(q)
 @inline q_transpose!(qt, q) = qt .= q_transposeCore(q)
 
@@ -161,8 +165,9 @@ where ```ωAB_B``` represents the angular velocity of frame ``B`` with respect t
 frame ``A``, projected into frame ``B``.
 """
 @inline q_derivative(q_AB, ωAB_B) = collect(q_derivativeCore(q_AB, ωAB_B))
-@inline q_derivative(q_AB::SVector{4, T}, ωAB_B::SVector{3, T}) where {T} = SVector{4, T}(q_derivativeCore(q_AB, ωAB_B))
-@inline q_derivative(q_AB::Tuple{T, T, T, T}, ωAB_B) where {T} = q_derivativeCore(q_AB, ωAB_B)
+@inline q_derivative(q_AB::SVector{4}, ωAB_B::SVector{3}) = SVector{4}(q_derivativeCore(q_AB, ωAB_B))
+@inline q_derivative(q_AB::Quaternion, ωAB_B) = q_derivativeCore(q_AB, ωAB_B)
+@inline q_derivative(q_AB, ωAB_B::Vector3) = q_derivativeCore(q_AB, ωAB_B)
 @inline q_derivative!(dq_AB, q_AB, ωAB_B) = dq_AB .= q_derivativeCore(q_AB, ωAB_B)
 
 @inline function q_rotx(θ)
@@ -258,12 +263,12 @@ end
 Compute the inverse of the input quaternion.
 """
 @inline q_inverse(q) = collect(q_inverseCore(q))
-@inline q_inverse(q::Tuple{T, T, T}) where {T} = q_inverseCore(q)
-@inline q_inverse(q::SVector{4, T}) where {T} = SVector{4, T}(q_inverseCore(q))
+@inline q_inverse(q::Vector3) = q_inverseCore(q)
+@inline q_inverse(q::SVector{4}) = SVector{4}(q_inverseCore(q))
 
 @inline q_toRv(q) = collect(q_toRvCore(q))
-@inline q_toRv(q::Tuple{T, T, T}) where {T} = q_toRvCore(q)
-@inline q_toRv(q::SVector{4, T}) where {T} = SVector{4, T}(q_toRvCore(q))
+@inline q_toRv(q::Vector3)= q_toRvCore(q)
+@inline q_toRv(q::SVector{4}) = SVector{4}(q_toRvCore(q))
 
 @inline q_fromRv(ϕ) = q_fromAxisAngle(ϕ, norm(ϕ))
 @inline q_fromRv!(q, ϕ) = q_fromAxisAngle!(q, ϕ, norm(ϕ))

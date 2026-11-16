@@ -114,9 +114,7 @@ end
 Compute a = b × c.
 """
 @inline function cross!(a, b, c)
-    a[1] = -b[3]*c[2] + b[2]*c[3]
-    a[2] = +b[3]*c[1] - b[1]*c[3]
-    a[3] = -b[2]*c[1] + b[1]*c[2]
+    a[1], a[2], a[3] = cross3(b, c)
     return a
 end
 
@@ -126,9 +124,10 @@ end
 Compute a = a + b × c.
 """
 @inline function addCross!(a, b, c)
-    a[1] += -b[3]*c[2] + b[2]*c[3]
-    a[2] += +b[3]*c[1] - b[1]*c[3]
-    a[3] += -b[2]*c[1] + b[1]*c[2]
+    bxc = cross3(b, c)
+    a[1] += bxc[1]
+    a[2] += bxc[2]
+    a[3] += bxc[3]
     return a
 end
 
@@ -138,39 +137,8 @@ end
 Compute a = b × (b × c).
 """
 @inline function crossSq!(a, b, c)
-    b1, b2, b3 = b
-    c1, c2, c3 = c
-    a[1] = (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
-    a[2] = (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
-    a[3] = (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
+    a[1], a[2], a[3] = crossSq3(b, c)
     return a
-end
-
-@inline function crossSq(b::V, c::Tuple{T, T, T}) where {V, T}
-    b1, b2, b3 = b
-    c1, c2, c3 = c
-    a1 = (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
-    a2 = (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
-    a3 = (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
-    return a1, a2, a3
-end
-
-@inline function crossSq(b::Tuple{T, T, T}, c::V) where {V, T}
-    b1, b2, b3 = b
-    c1, c2, c3 = c
-    a1 = (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
-    a2 = (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
-    a3 = (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
-    return a1, a2, a3
-end
-
-@inline function crossSq(b::Tuple{T, T, T}, c::Tuple{T, T, T}) where {T}
-    b1, b2, b3 = b
-    c1, c2, c3 = c
-    a1 = (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
-    a2 = (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
-    a3 = (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
-    return a1, a2, a3
 end
 
 """
@@ -179,10 +147,9 @@ end
 Compute a = a + b × (b × c).
 """
 @inline function addCrossSq!(a, b, c)
-    b1, b2, b3 = b
-    c1, c2, c3 = c
-    a[1] += (-b2*b2 - b3*b3)*c1 + b1*b2*c2 + b1*b3*c3
-    a[2] += (-b1*b1 - b3*b3)*c2 + b1*b2*c1 + b2*b3*c3
-    a[3] += (-b2*b2 - b1*b1)*c3 + b1*b3*c1 + b2*b3*c2
+    bxc = crossSq3(b, c)
+    a[1] += bxc[1]
+    a[2] += bxc[2]
+    a[3] += bxc[3]
     return a
 end
