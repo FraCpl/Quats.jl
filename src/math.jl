@@ -5,7 +5,7 @@
 @inline cross3(a, b) = a[2]*b[3] - a[3]*b[2], a[3]*b[1] - a[1]*b[3], a[1]*b[2] - a[2]*b[1]       # out = a × (a × b)
 
 # R * v where R is a 3x3 matrix, and v is a 3x1 vector
-@inline function mul3(R, v)
+@inline function mmul3(R, v)
     r11, r21, r31, r12, r22, r32, r13, r23, r33 = R
     x, y, z = v
     ox = r11 * x + r12 * y + r13 * z
@@ -14,9 +14,9 @@
     return ox, oy, oz
 end
 
-@inline mul3!(y, R, v) = y .= mul3(R, v)
-@inline row3(R, i) = (R[i, 1], R[i, 2], R[i, 3])
-@inline col3(R, i) = (R[1, i], R[2, i], R[3, i])
+@inline mmul3!(y, R, v) = y .= mmul3(R, v)
+@inline mrow3(R, i) = (R[i, 1], R[i, 2], R[i, 3])
+@inline mcol3(R, i) = (R[1, i], R[2, i], R[3, i])
 
 function crossSq3(a, b)
     a1, a2, a3 = a
