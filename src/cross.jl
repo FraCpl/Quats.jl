@@ -16,12 +16,6 @@ Compute the cross product matrix of a vector ```v``` given its scalar components
     return R
 end
 
-@inline function crossMat(v::SVector{3, T}) where {T}
-    x, y, z = v
-    o = zero(T)
-    return SMatrix{3, 3}(o, z, -y, -z, o, x, y, -x, o)
-end
-
 @inline crossMat!(R, v) = crossMat!(R, v[1], v[2], v[3])
 
 @inline function crossMat!(R, x, y, z)
@@ -83,13 +77,6 @@ end
     return R
 end
 
-@inline function crossMatSq(v::SVector{3, T}) where {T}
-    x, y, z = v
-    xx = x*x; yy = y*y; zz = z*z
-    xy = x*y; xz = x*z; yz = y*z
-    return SMatrix{3, 3}(-yy - zz, xy, xz, xy, -xx - zz, yz, xz, yz, -xx - yy)
-end
-
 # @inline function crossMatSq(v::SVector{3, T}) where T
 #     return crossMatSqStatic(v[1], v[2], v[3])
 # end
@@ -104,9 +91,7 @@ end
 #     ]
 # end
 
-@inline crossMatInv(M::Matrix) = [-M[2, 3]; M[1, 3]; -M[1, 2]]
-
-@inline crossMatInv(M::SMatrix{3, 3, T}) where {T} = SVector{3}(-M[2, 3], M[1, 3], -M[1, 2])
+@inline crossMatInv(M::AbstractMatrix) = [-M[2, 3]; M[1, 3]; -M[1, 2]]
 
 """
     cross!(a, b, c)

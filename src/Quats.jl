@@ -2,14 +2,13 @@
 # European Space Agency, 2023
 module Quats
 using LinearAlgebra
-using StaticArrays
 
-const ex = [1.0, 0.0, 0.0]
-const ey = [0.0, 1.0, 0.0]
-const ez = [0.0, 0.0, 1.0]
+const ex = (1.0, 0.0, 0.0)
+const ey = (0.0, 1.0, 0.0)
+const ez = (0.0, 0.0, 1.0)
 
 export Vector3, Quaternion
-export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3
+export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3, dprod3
 include("math.jl")
 
 export crossMat, crossMat!, crossMatInv, crossMatSq, crossMatSq!

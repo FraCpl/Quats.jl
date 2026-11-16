@@ -17,6 +17,8 @@ end
 @inline mmul3!(y, R, v) = y .= mmul3(R, v)
 @inline mrow3(R, i) = (R[i, 1], R[i, 2], R[i, 3])
 @inline mcol3(R, i) = (R[1, i], R[2, i], R[3, i])
+@inline dprod3(a, b) = [a[1]*b[1] a[1]*b[2] a[1]*b[3]; a[2]*b[1] a[2]*b[2] a[2]*b[3]; a[3]*b[1] a[3]*b[2] a[3]*b[3]] # a * b'
+@inline dprod3(a) = dprod3(a, a)
 
 function crossSq3(a, b)
     a1, a2, a3 = a
@@ -28,6 +30,7 @@ function crossSq3(a, b)
 end
 
 const Vector3{T} = NTuple{3, T}
+@inline Base.iszero(a::Vector3) = all(iszero, a)
 @inline Base.:+(a::Vector3, b::Vector3) = sum3(a, b)         # Sum
 @inline Base.:+(a::Vector3, b::AbstractVector) = sum3(a, b)  # Sum
 @inline Base.:+(a::AbstractVector, b::Vector3) = sum3(a, b)  # Sum
@@ -60,6 +63,7 @@ const Vector3{T} = NTuple{3, T}
     p == Inf ? maximum(abs, a) :
     p == 1 ? sum(abs, a) :
     sum(abs(x)^p for x in a)^(1/p)
+
 @inline LinearAlgebra.normalize(a::Vector3) = a / norm(a)
 
 @inline Vector3(v::AbstractVector) = (v[1], v[2], v[3])
@@ -67,6 +71,7 @@ const Vector3{T} = NTuple{3, T}
 @inline toVector!(v::AbstractVector, a::Vector3) = v .= a
 
 const Quaternion{T} = NTuple{4, T}
+@inline Base.iszero(a::Quaternion) = all(iszero, a)
 @inline Base.:*(a::Quaternion, s::Number) = (s*a[1], s*a[2], s*a[3], s*a[4])               # Scalar multiplication
 @inline Base.:*(s::Number, a::Quaternion) = (s*a[1], s*a[2], s*a[3], s*a[4])               # Scalar multiplication
 @inline Base.:/(a::Quaternion, s::Number) = (a[1]/s, a[2]/s, a[3]/s, a[4]/s)               # Scalar division
