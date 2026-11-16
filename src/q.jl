@@ -382,26 +382,18 @@ end
 
 # (θ1=θ_AB, θ2=θ_BC, θ3=θ_CD) --> q_AD
 @inline q_fromEuler(θ1, θ2, θ3, s::Symbol=:zyx) = q_fromEuler(θ1, θ2, θ3, Val(s))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyz}) = q_fromSequence((θ1, θ2, θ3), (1, 2, 3))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzy}) = q_fromSequence((θ1, θ2, θ3), (1, 3, 2))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxz}) = q_fromSequence((θ1, θ2, θ3), (2, 1, 3))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzx}) = q_fromSequence((θ1, θ2, θ3), (2, 3, 1))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxy}) = q_fromSequence((θ1, θ2, θ3), (3, 1, 2))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyx}) = q_fromSequence((θ1, θ2, θ3), (3, 2, 1))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyx}) = q_fromSequence((θ1, θ2, θ3), (1, 2, 1))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzx}) = q_fromSequence((θ1, θ2, θ3), (1, 3, 1))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxy}) = q_fromSequence((θ1, θ2, θ3), (2, 1, 2))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzy}) = q_fromSequence((θ1, θ2, θ3), (2, 3, 2))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxz}) = q_fromSequence((θ1, θ2, θ3), (3, 1, 3))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyz}) = q_fromSequence((θ1, θ2, θ3), (3, 2, 3))
-
-@inline function q_fromSequence(θ, sequence=(3, 2, 1))
-    q = q_fromAxisAngle(sequence[1], θ[1])
-    for i in 2:lastindex(θ)
-        q_multiply!(q, q_fromAxisAngle(sequence[i], θ[i]))
-    end
-    return q
-end
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyz}) = q_rotx(θ1) * q_roty(θ2) * q_rotz(θ3)#q_fromSequence((θ1, θ2, θ3), (1, 2, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzy}) = q_rotx(θ1) * q_rotz(θ2) * q_roty(θ3)#q_fromSequence((θ1, θ2, θ3), (1, 3, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxz}) = q_roty(θ1) * q_rotx(θ2) * q_rotz(θ3)#q_fromSequence((θ1, θ2, θ3), (2, 1, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzx}) = q_roty(θ1) * q_rotz(θ2) * q_rotx(θ3)#q_fromSequence((θ1, θ2, θ3), (2, 3, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxy}) = q_rotz(θ1) * q_rotx(θ2) * q_roty(θ3)#q_fromSequence((θ1, θ2, θ3), (3, 1, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyx}) = q_rotz(θ1) * q_roty(θ2) * q_rotx(θ3)#q_fromSequence((θ1, θ2, θ3), (3, 2, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyx}) = q_rotx(θ1) * q_roty(θ2) * q_rotx(θ3)#q_fromSequence((θ1, θ2, θ3), (1, 2, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzx}) = q_rotx(θ1) * q_rotz(θ2) * q_rotx(θ3)#q_fromSequence((θ1, θ2, θ3), (1, 3, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxy}) = q_roty(θ1) * q_rotx(θ2) * q_roty(θ3)#q_fromSequence((θ1, θ2, θ3), (2, 1, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzy}) = q_roty(θ1) * q_rotz(θ2) * q_roty(θ3)#q_fromSequence((θ1, θ2, θ3), (2, 3, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxz}) = q_rotz(θ1) * q_rotx(θ2) * q_rotz(θ3)#q_fromSequence((θ1, θ2, θ3), (3, 1, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyz}) = q_rotz(θ1) * q_roty(θ2) * q_rotz(θ3)#q_fromSequence((θ1, θ2, θ3), (3, 2, 3))
 
 
 """
