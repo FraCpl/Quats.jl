@@ -112,3 +112,100 @@ end
     f = 2*atan(nqv, qs) / nqv
     return f*qx, f*qy, f*qz
 end
+
+@inline function q_fromAxesCore(xB_A, yB_A, zB_A)
+    r11, r21, r31 = xB_A
+    r12, r22, r32 = yB_A
+    r13, r23, r33 = zB_A
+    return q_fromDcmCore((r11, r21, r31, r12, r22, r32, r13, r23, r33)) # q_AB
+end
+
+@inline function q_rotx(θ::T) where {T}
+    sθ, cθ = sincos(θ / 2)
+    zr = zero(T)
+    return (cθ, sθ, zr, zr)
+end
+
+@inline function q_roty(θ::T) where {T}
+    sθ, cθ = sincos(θ / 2)
+    zr = zero(T)
+    return (cθ, zr, sθ, zr)
+end
+
+@inline function q_rotz(θ::T) where {T}
+    sθ, cθ = sincos(θ / 2)
+    zr = zero(T)
+    return (cθ, zr, zr, sθ)
+end
+
+
+"""
+    xB_A = q_tox(q_AB)
+
+Compute the x axis of frame B projected in frame A.
+"""
+@inline function q_tox(q_AB)
+    qs, qx, qy, qz = q_AB
+
+    c2x = -qy*qy - qz*qz
+    c2y = qx*qy
+    c2z = qx*qz
+
+    # Compute xB_A
+    x = 1.0 + 2*c2x
+    y = 2(c2y + qs*qz)
+    z = 2(c2z - qs*qy)
+    return x, y, z
+end
+
+"""
+    yB_A = q_toy(q_AB)
+
+Compute the y axis of frame B projected in frame A.
+"""
+@inline function q_toy(q_AB)
+    qs, qx, qy, qz = q_AB
+
+    c2x = qy*qx
+    c2y = -qz*qz - qx*qx
+    c2z = qy*qz
+
+    # Compute yB_A
+    x = 2(c2x - qs*qz)
+    y = 1.0 + 2(c2y)
+    z = 2(c2z + qs*qx)
+    return x, y, z
+end
+
+"""
+    zB_A = q_toz(q_AB)
+
+Compute the z axis of frame B projected in frame A.
+"""
+@inline function q_toz(q_AB)
+    qs, qx, qy, qz = q_AB
+
+    c2x = qz*qx
+    c2y = qz*qy
+    c2z = -qx*qx - qy*qy
+
+    # Copmute zB_A
+    x = 2(c2x + qs*qy)
+    y = 2(c2y - qs*qx)
+    z = 1.0 + 2(c2z)
+    return x, y, z
+end
+
+@inline function q_attitudeErrorCore(qNominal, q)
+    ps, px, py, pz = q
+    qs, qx, qy, qz = qNominal
+
+    imax = findmax(abs, qNominal)[2]
+    sgn = sign(qNominal[imax]) == sign(q[imax]) ? 2.0 : -2.0
+
+    θx = (-px*qs + ps*qx + pz*qy - py*qz)*sgn
+    θy = (-py*qs - pz*qx + ps*qy + px*qz)*sgn
+    θz = (-pz*qs + py*qx - px*qy + ps*qz)*sgn
+
+    return θx, θy, θz  # 2q_multiply(q_transpose(sgn*q), qNominal)[2:4]
+end

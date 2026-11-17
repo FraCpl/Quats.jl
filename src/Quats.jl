@@ -7,11 +7,12 @@ const ex = (1.0, 0.0, 0.0)
 const ey = (0.0, 1.0, 0.0)
 const ez = (0.0, 0.0, 1.0)
 
-export Vector3, Quaternion
-export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3, dprod3
+export Vector3, Quaternion, Matrix3x3
+export toVector, toVector!, toMatrix, toMatrix!
+export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3, dprod3, getij
 include("math.jl")
 
-export crossMat, crossMat!, crossMatInv, crossMatSq, crossMatSq!
+export crossMat, crossMat!, crossMatSq, crossMatSq!
 export cross!, crossSq!, addCross!, addCrossSq!, crossMatStatic, crossMatSqStatic, crossSq
 include("cross.jl")
 

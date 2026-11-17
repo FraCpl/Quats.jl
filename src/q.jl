@@ -1,4 +1,12 @@
 """
+    q_identity
+
+Get identity quaternion, with scalar component equal to 1 and
+vector components equal to zero.
+"""
+q_identity() = [1.0, 0.0, 0.0, 0.0]
+
+"""
     q_AC = q_multiply(q_AB, q_BC)
 
 Mutliply the two input quaternions as follows:
@@ -51,58 +59,27 @@ Translate the input unitary quaternion into a transformation matrix.
 R_{AB}(q_{AB}) = I + 2qₛ[qᵥ×] + 2[qᵥ×]²
 ```
 """
-@inline function q_toDcm(q_AB)
-    R_AB = Matrix{eltype(q_AB)}(undef, 3, 3)
-    return q_toDcm!(R_AB, q_AB)
-end
-
-@inline function q_toDcm(q_AB::Quaternion)
-    r11, r21, r31, r12, r22, r32, r13, r23, r33 = q_toDcmCore(q_AB)
-    return [r11 r12 r13; r21 r22 r23; r31 r32 r33]
-end
-
-@inline function q_toDcm!(R_AB, q_AB)     # R_AB from q_AB
-    R_AB[1, 1], R_AB[2, 1], R_AB[3, 1],
-    R_AB[1, 2], R_AB[2, 2], R_AB[3, 2],
-    R_AB[1, 3], R_AB[2, 3], R_AB[3, 3] = q_toDcmCore(q_AB)
-    return R_AB
-end
+@inline q_toDcm(q_AB::AbstractVector) = toMatrix(q_toDcmCore(q_AB))
+@inline q_toDcm(q_AB::Quaternion) = q_toDcmCore(q_AB)
+@inline q_toDcm!(R_AB::AbstractMatrix, q_AB) = toMatrix!(R_AB, q_toDcmCore(q_AB))
 
 """
     q_AB = q_fromDcm(R_AB)
 
 Translate the input rotation matrix into a unitary quaternion.
 """
-@inline q_fromDcm(R_AB) = collect(q_fromDcmCore(R_AB))
-@inline q_fromDcm!(q_AB, R_AB) = q_AB .= q_fromDcmCore(R_AB)
+@inline q_fromDcm(R_AB::AbstractMatrix) = collect(q_fromDcmCore(R_AB))
+@inline q_fromDcm(R_AB::Matrix3x3) = q_fromDcmCore(R_AB)
+@inline q_fromDcm!(q_AB::AbstractVector, R_AB) = q_AB .= q_fromDcmCore(R_AB)
 
 """
     q_AB = q_fromAxes(xB_A, yB_A, zB_A)
 
 Compute the attitude quaternion given as input the axes of a reference frame.
 """
-# @inline q_fromAxes(xB_A, yB_A, zB_A) = q_fromDcm(dcm_fromAxes(xB_A, yB_A, zB_A))
-
-@inline function q_fromAxes(xB_A, yB_A, zB_A)
-    q_AB = Vector{eltype(yB_A)}(undef, 4)
-    return q_fromAxes!(q_AB, xB_A, yB_A, zB_A)
-end
-
-@inline function q_fromAxes!(q_AB, xB_A, yB_A, zB_A)
-    r11, r21, r31 = xB_A
-    r12, r22, r32 = yB_A
-    r13, r23, r33 = zB_A
-    R_AB = (r11, r21, r31, r12, r22, r32, r13, r23, r33)
-    return q_AB .= q_fromDcmCore(R_AB)
-end
-
-@inline function q_fromAxes(xB_A::Vector3, yB_A::Vector3, zB_A::Vector3)
-    r11, r12, r13 = xB_A
-    r21, r22, r23 = yB_A
-    r31, r32, r33 = zB_A
-    R_AB = (r11, r21, r31, r12, r22, r32, r13, r23, r33)
-    return q_fromDcmCore(R_AB)
-end
+@inline q_fromAxes!(q_AB::AbstractVector, xB_A, yB_A, zB_A) = q_AB .= q_fromAxesCore(xB_A, yB_A, zB_A)
+@inline q_fromAxes(xB_A::Vector3, yB_A::Vector3, zB_A::Vector3) = q_fromAxesCore(xB_A, yB_A, zB_A)
+@inline q_fromAxes(xB_A::AbstractVector, yB_A::AbstractVector, zB_A::AbstractVector) = toVector(q_fromAxesCore(xB_A, yB_A, zB_A))
 
 """
     q_random()
@@ -111,14 +88,6 @@ Generate a random unitary quaternion.
 """
 @inline q_random() = normalize!(randn(4))
 @inline q_random(rng) = normalize!(randn(rng, 4))
-
-"""
-    q_identity()
-
-Get identity quaternion, with scalar component equal to 1 and
-vector components equal to zero.
-"""
-@inline q_identity() = [1.0; 0.0; 0.0; 0.0]
 
 """
     v_A = q_transformVector(q_AB, v_B)
@@ -171,23 +140,6 @@ frame ``A``, projected into frame ``B``.
 @inline q_derivative(q_AB, ωAB_B::Vector3) = q_derivativeCore(q_AB, ωAB_B)
 @inline q_derivative!(dq_AB, q_AB, ωAB_B) = dq_AB .= q_derivativeCore(q_AB, ωAB_B)
 
-@inline function q_rotx(θ::T) where {T}
-    sθ, cθ = sincos(θ / 2)
-    zr = zero(T)
-    return (cθ, sθ, zr, zr)
-end
-
-@inline function q_roty(θ::T) where {T}
-    sθ, cθ = sincos(θ / 2)
-    zr = zero(T)
-    return (cθ, zr, sθ, zr)
-end
-
-@inline function q_rotz(θ::T) where {T}
-    sθ, cθ = sincos(θ / 2)
-    zr = zero(T)
-    return (cθ, zr, zr, sθ)
-end
 
 @inline q_rotx!(q, θ) = q .= q_rotx(θ)
 @inline q_roty!(q, θ) = q .= q_roty(θ)
@@ -441,174 +393,10 @@ Compute the spherical linear interpolation between two quaternions at τ, where 
     return q_slerp(q[id0], q[id1], (ti - t[id0])/(t[id1] - t[id0]))
 end
 
-# e.g., qNominal = qDes, q = qEst
-@inline function q_attitudeError(qNominal, q)
-    θerr = Vector{eltype(q)}(undef, 3)
-    return q_attitudeError!(θerr, qNominal, q)
-end
-
-@inline function q_attitudeError!(θerr, qNominal, q)
-    ps, px, py, pz = q
-    qs, qx, qy, qz = qNominal
-
-    imax = findmax(abs, qNominal)[2]
-    sgn = sign(qNominal[imax]) == sign(q[imax]) ? 2.0 : -2.0
-
-    θerr[1] = (-px*qs + ps*qx + pz*qy - py*qz)*sgn
-    θerr[2] = (-py*qs - pz*qx + ps*qy + px*qz)*sgn
-    θerr[3] = (-pz*qs + py*qx - px*qy + ps*qz)*sgn
-
-    return θerr  # 2q_multiply(q_transpose(sgn*q), qNominal)[2:4]
-end
-
-"""
-    xB_A = q_tox(q_AB)
-
-Compute the x axis of frame B projected in frame A.
-"""
-@inline function q_tox(q_AB)
-    out = Vector{eltype(q_AB)}(undef, 3)
-    return q_tox!(out, q_AB)
-end
-
-"""
-    yB_A = q_toy(q_AB)
-
-Compute the y axis of frame B projected in frame A.
-"""
-@inline function q_toy(q_AB)
-    out = Vector{eltype(q_AB)}(undef, 3)
-    return q_toy!(out, q_AB)
-end
-
-"""
-    zB_A = q_toz(q_AB)
-
-Compute the z axis of frame B projected in frame A.
-"""
-@inline function q_toz(q_AB)
-    out = Vector{eltype(q_AB)}(undef, 3)
-    return q_toz!(out, q_AB)
-end
-
-"""
-    q_tox!(xB_A, q_AB)
-
-Compute the x axis of frame B projected in frame A.
-"""
-@inline function q_tox!(xB_A, q_AB)
-    qs, qx, qy, qz = q_AB
-
-    c2x = -qy*qy - qz*qz
-    c2y = qx*qy
-    c2z = qx*qz
-
-    xB_A[1] = 1.0 + 2*c2x
-    xB_A[2] = 2(c2y + qs*qz)
-    xB_A[3] = 2(c2z - qs*qy)
-
-    return xB_A
-end
-
-"""
-    q_toy!(yB_A, q_AB)
-
-Compute the y axis of frame B projected in frame A.
-"""
-@inline function q_toy!(yB_A, q_AB)
-    qs, qx, qy, qz = q_AB
-
-    c2x = qy*qx
-    c2y = -qz*qz - qx*qx
-    c2z = qy*qz
-
-    yB_A[1] = 2(c2x - qs*qz)
-    yB_A[2] = 1.0 + 2(c2y)
-    yB_A[3] = 2(c2z + qs*qx)
-
-    return yB_A
-end
-
-"""
-    q_toz!(zB_A, q_AB)
-
-Compute the z axis of frame B projected in frame A.
-"""
-@inline function q_toz!(zB_A, q_AB)
-    qs, qx, qy, qz = q_AB
-
-    c2x = qz*qx
-    c2y = qz*qy
-    c2z = -qx*qx - qy*qy
-
-    zB_A[1] = 2(c2x + qs*qy)
-    zB_A[2] = 2(c2y - qs*qx)
-    zB_A[3] = 1.0 + 2(c2z)
-
-    return zB_A
-end
+@inline q_attitudeError!(θerr, qNominal, q) = θerr .= q_attitudeErrorCore(qNominal, q)
+@inline q_attitudeError(qNominal, q) = q_attitudeErrorCore(qNominal, q)
 
 function q_fromZaxis(zB_A)
     zB_A = normalize(zB_A)
     return q_fromDcm([nullspace(zB_A') zB_A])
-end
-
-# This function determines the convention used by a quaternion multiplication function in
-# terms of: 1) Scalar-first or scalar-last, 2) Right-handed or left-handed algebra
-# The multiplication function shall provide q*p = fmult(q, p)
-function q_testConvention(fmult)
-    q = [1.0; 2.0; 3.0; 4.0]
-    p = [-4.0; 2.0; -3.0; 1.0]
-    q_testConvention(fmult(q, p), q, p)
-end
-
-function q_testConvention(qp, q, p)
-
-    # out = q*p
-    function q_multiplyUniversal(q, p; scalarFirst=true, right=true)
-        qq = copy(q)
-        pp = copy(p)
-        if !scalarFirst
-            qq = [q[4]; q[1:3]]
-            pp = [p[4]; p[1:3]]
-        end
-        qqpp = right ? qp_right(qq, pp) : qp_left(qq, pp)
-        scalarFirst && qqpp;
-        return [qqpp[2:4]; qqpp[1]]
-    end
-
-    function qp_right(q, p)
-        qs, qx, qy, qz = q
-        return [
-            +qs -qx -qy -qz;
-            +qx +qs -qz +qy;
-            +qy +qz +qs -qx;
-            +qz -qy +qx +qs
-        ]*p
-    end
-
-    function qp_left(q, p)
-        qs, qx, qy, qz = q
-        return [
-            +qs -qx -qy -qz;
-            +qx +qs +qz -qy;
-            +qy -qz +qs +qx;
-            +qz +qy -qx +qs
-        ]*p
-    end
-
-    qerr(a, b) = min(norm(a - b), norm(a + b))
-    qp1 = q_multiplyUniversal(q, p; scalarFirst=true, right=true)
-    qp2 = q_multiplyUniversal(q, p; scalarFirst=false, right=true)
-    qp3 = q_multiplyUniversal(q, p; scalarFirst=true, right=false)
-    qp4 = q_multiplyUniversal(q, p; scalarFirst=false, right=false)
-    errv = [qerr(qp1, qp), qerr(qp2, qp), qerr(qp3, qp), qerr(qp4, qp)]
-
-    msgs = [
-        "Scalar first, right-handed (ij = k)",
-        "Scalar last, right-handed (ij = k)",
-        "Scalar first, left-handed (ij = -k)",
-        "Scalar-last, left-handed (ij = -k)",
-    ]
-    println("Quaternion convention: \n"*msgs[findmin(errv)[2]])
 end
