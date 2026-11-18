@@ -152,6 +152,13 @@ Compute the unitary quaternion given as input an axis-angle representation.
 """
 q_fromAxisAngle(u, θ) = iszero(u) ? q_identity() : [cos(0.5θ); sin(0.5θ)*normalize(u)]
 
+function q_fromAxisAngle(u::Vector3, θ)
+    iszero(u) && return (1.0, 0.0, 0.0, 0.0)
+    x, y, z = normalize(u)
+    sθ, cθ = sincos(θ/2)
+    return (cθ, x*sθ, y*sθ, z*sθ)
+end
+
 @inline function q_fromAxisAngle(idx::Int, θ)
     sθ, cθ = sincos(θ / 2)
     q = [cθ; 0; 0; 0]

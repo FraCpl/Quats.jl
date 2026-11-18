@@ -4,6 +4,11 @@ const Quaternion{T} = NTuple{4, T}
 const Matrix3x3{T} = NTuple{9, T}
 
 # CORE MATH FUNCTIONS -------------------------------------------------------------------- #
+@inline zeros3() = (0.0, 0.0, 0.0)
+@inline randn3() = (randn(), randn(), randn())
+@inline randn3(rng) = (randn(rng), randn(rng), randn(rng))
+@inline rand3() = (rand(), rand(), rand())
+@inline rand3(rng) = (rand(rng), rand(rng), rand(rng))
 @inline sum3(a, b) = a[1]+b[1], a[2]+b[2], a[3]+b[3]
 @inline subt3(a, b) = a[1]-b[1], a[2]-b[2], a[3]-b[3]
 @inline smult3(s, a) = s*a[1], s*a[2], s*a[3]
@@ -39,6 +44,21 @@ function crossSq3(a, b)
     return o1, o2, o3
 end
 
+@inline function evalpoly3(t, C::AbstractVector{Vector3{T}}) where T
+    x1 = zero(T)
+    x2 = zero(T)
+    x3 = zero(T)
+
+    @inbounds for k in length(C):-1:1
+        c = C[k]
+        x1 = muladd(x1, t, c[1])
+        x2 = muladd(x2, t, c[2])
+        x3 = muladd(x3, t, c[3])
+    end
+
+    return (x1, x2, x3)
+end
+
 # VECTOR FUNCTIONS ----------------------------------------------------------------------- #
 @inline Base.iszero(a::Vector3) = all(iszero, a)
 @inline Base.:+(a::Vector3, b::Vector3) = sum3(a, b)         # Sum
@@ -63,6 +83,8 @@ end
 @inline LinearAlgebra.cross(a::Vector3, b::Vector3) = cross3(a, b)
 @inline LinearAlgebra.cross(a::Vector3, b::AbstractVector) = cross3(a, b)
 @inline LinearAlgebra.cross(a::AbstractVector, b::Vector3) = cross3(a, b)
+@inline LinearAlgebra.transpose(a::Vector3) = toVector(a)'  #This allocates, but it is sometimes needed
+@inline LinearAlgebra.adjoint(a::Vector3) = toVector(a)'  #This allocates, but it is sometimes needed
 
 @inline crossSq(a::Vector3, b::Vector3) = crossSq3(a, b)
 @inline crossSq(a::Vector3, b::AbstractVector) = crossSq3(a, b)
