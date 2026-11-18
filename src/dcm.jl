@@ -14,11 +14,9 @@ R_{AB}(θ_{AB}) = I + \\sin(θ_{AB})[u×] + (1 - \\cos(θ_{AB}))[u×]^2
 ```
 """
 @inline dcm_fromAxisAngle(u, θ) = q_toDcm(q_fromAxisAngle(u, θ))
-@inline dcm_fromAxisAngle(idx::Int, θ) = dcm_fromSequence((θ,), (idx,))
 
 # (θ1=θ_AB, θ2=θ_BC, θ3=θ_CD) --> R_AD
 @inline dcm_fromEuler(θ1, θ2, θ3, s::Symbol=:zyx) = q_toDcm(q_fromEuler(θ1, θ2, θ3, s))
-@inline dcm_fromSequence(θ, sequence=(3, 2, 1)) = q_toDcm(q_fromSequence(θ, sequence))
 @inline dcm_toEuler(R, s::Symbol=:zyx) = q_toEuler(q_fromDcm(R), s)
 
 """
@@ -49,8 +47,7 @@ end
 Compute the transformation matrix given as input the axes of a reference frame.
 """
 @inline dcm_fromAxes(xB_A, yB_A, zB_A) = [xB_A yB_A zB_A] # R_AB
-
-@inline dcm_fromAxes(xB_A::Vector3, yB_A::Vector3, zB_A::Vector3) = [xB_A[1] yB_A[1] zB_A[1]; xB_A[2] yB_A[2] zB_A[2]; xB_A[3] yB_A[3] zB_A[3]]
+@inline dcm_fromAxes(xB_A::Vector3, yB_A::Vector3, zB_A::Vector3) = (xB_A[1], xB_A[2], xB_A[3], yB_A[1], yB_A[2], yB_A[3], zB_A[1], zB_A[2], zB_A[3])
 
 @inline function dcm_fromAxes!(R_AB, xB_A, yB_A, zB_A)
     @inbounds for i in 1:3
@@ -61,26 +58,19 @@ Compute the transformation matrix given as input the axes of a reference frame.
     return R_AB
 end
 
-# R_AB(θ_AB)
-@inline function dcm_rotAxis(angle, axis::Int)
-    axis == 1 && return dcm_rotx(angle)
-    axis == 2 && return dcm_roty(angle)
-    return dcm_rotz(angle)
-end
-
 function dcm_rotx(angle)
     sθ, cθ = sincos(angle)
-    return [1 0 0; 0 cθ -sθ; 0 sθ cθ]
+    return (1.0, 0.0, 0.0, 0.0, cθ, sθ, 0.0, -sθ, cθ)
 end
 
 function dcm_roty(angle)
     sθ, cθ = sincos(angle)
-    return [cθ 0 sθ; 0 1 0; -sθ 0 cθ]
+    return (cθ, 0.0, -sθ, 0.0, 1.0, 0.0, sθ, 0.0, cθ)
 end
 
 function dcm_rotz(angle)
     sθ, cθ = sincos(angle)
-    return [cθ -sθ 0; sθ cθ 0; 0 0 1]
+    return (cθ, sθ, 0.0, -sθ, cθ, 0.0, 0.0, 0.0, 1.0)
 end
 
 @inline function dcm_normalize(R)

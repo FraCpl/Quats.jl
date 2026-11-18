@@ -122,20 +122,20 @@ end
 
 @inline function q_rotx(θ::T) where {T}
     sθ, cθ = sincos(θ / 2)
-    zr = zero(T)
-    return (cθ, sθ, zr, zr)
+    o = zero(T)
+    return (cθ, sθ, o, o)
 end
 
 @inline function q_roty(θ::T) where {T}
     sθ, cθ = sincos(θ / 2)
-    zr = zero(T)
-    return (cθ, zr, sθ, zr)
+    o = zero(T)
+    return (cθ, o, sθ, o)
 end
 
 @inline function q_rotz(θ::T) where {T}
     sθ, cθ = sincos(θ / 2)
-    zr = zero(T)
-    return (cθ, zr, zr, sθ)
+    o = zero(T)
+    return (cθ, o, o, sθ)
 end
 
 

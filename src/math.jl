@@ -9,6 +9,7 @@ const Matrix3x3{T} = NTuple{9, T}
 @inline randn3(rng) = (randn(rng), randn(rng), randn(rng))
 @inline rand3() = (rand(), rand(), rand())
 @inline rand3(rng) = (rand(rng), rand(rng), rand(rng))
+@inline randn4(rng) = (randn(rng), randn(rng), randn(rng), randn(rng))
 @inline sum3(a, b) = a[1]+b[1], a[2]+b[2], a[3]+b[3]
 @inline subt3(a, b) = a[1]-b[1], a[2]-b[2], a[3]-b[3]
 @inline smult3(s, a) = s*a[1], s*a[2], s*a[3]
@@ -86,6 +87,7 @@ end
 @inline LinearAlgebra.transpose(a::Vector3) = toVector(a)'  #This allocates, but it is sometimes needed
 @inline LinearAlgebra.adjoint(a::Vector3) = toVector(a)'  #This allocates, but it is sometimes needed
 
+@inline crossSq(a::AbstractVector, b::AbstractVector) = toVector(crossSq3(a, b))
 @inline crossSq(a::Vector3, b::Vector3) = crossSq3(a, b)
 @inline crossSq(a::Vector3, b::AbstractVector) = crossSq3(a, b)
 @inline crossSq(a::AbstractVector, b::Vector3) = crossSq3(a, b)
@@ -99,7 +101,7 @@ end
 @inline LinearAlgebra.normalize(a::Vector3) = a / norm(a)
 
 @inline Vector3(v::AbstractVector) = (v[1], v[2], v[3])
-@inline toVector(v::Vector3) = collect(v)
+@inline toVector(v::Vector3) = [v[1], v[2], v[3]]
 @inline toVector!(v::AbstractVector, a::Vector3) = v .= a
 
 # QUATERNION FUNCTIONS ------------------------------------------------------------------- #
@@ -116,7 +118,7 @@ end
 @inline LinearAlgebra.adjoint(q::Quaternion) = (q[1], -q[2], -q[3], -q[4])
 
 @inline Quaternion(q::AbstractVector) = (q[1], q[2], q[3], q[4])
-@inline toVector(q::Quaternion) = collect(q)
+@inline toVector(q::Quaternion) = [q[1], q[2], q[3], q[4]]
 @inline toVector!(v::AbstractVector, q::Quaternion) = v .= q
 
 # MATRIX FUNCTIONS ----------------------------------------------------------------------- #
