@@ -192,7 +192,7 @@ Compute the z axis of frame B projected in frame A.
     # Copmute zB_A
     x = 2(c2x + qs*qy)
     y = 2(c2y - qs*qx)
-    z = 1.0 + 2(c2z)
+    z = 1 + 2(c2z)
     return x, y, z
 end
 
@@ -201,7 +201,7 @@ end
     qs, qx, qy, qz = qNominal
 
     imax = findmax(abs, qNominal)[2]
-    sgn = sign(qNominal[imax]) == sign(q[imax]) ? 2.0 : -2.0
+    sgn = sign(qNominal[imax]) == sign(q[imax]) ? 2 : -2
 
     θx = (-px*qs + ps*qx + pz*qy - py*qz)*sgn
     θy = (-py*qs - pz*qx + ps*qy + px*qz)*sgn

@@ -26,7 +26,7 @@ Compute the squared cross product matrix of a vector ```v``` given its scalar co
 """
 @inline crossMatSq(v::AbstractArray) = toMatrix(crossMatSqCore(v))
 @inline crossMatSq(v::Vector3) = crossMatSqCore(v)
-@inline crossMatSq!(R::AbstractMatrix) = toMatrix!(R, crossMatSqCore(v))
+@inline crossMatSq!(R::AbstractMatrix, v) = toMatrix!(R, crossMatSqCore(v))
 
 """
     cross!(a, b, c)
