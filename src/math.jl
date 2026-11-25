@@ -29,7 +29,7 @@ end
 @inline mmul3!(y, R, v) = y .= mmul3(R, v)
 @inline dprod3core(a, b) = (a[1]*b[1], a[2]*b[1], a[3]*b[1], a[1]*b[2], a[2]*b[2], a[3]*b[2], a[1]*b[3], a[2]*b[3], a[3]*b[3])
 
-# Dyadic product
+# Dyadic product of two vectors, i.e., a * b'
 @inline dprod3(a::AbstractVector, b::AbstractVector) = toMatrix(dprod3core(a, b))
 @inline dprod3(a::Vector3, b::AbstractVector) = dprod3core(a, b)
 @inline dprod3(a::AbstractVector, b::Vector3) = dprod3core(a, b)

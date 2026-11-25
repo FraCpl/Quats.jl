@@ -351,7 +351,7 @@ Compute the exponential of the input quaternion.
     qvnn = qvn == 0 ? 1.0 : qvn
     k = exp(qs)
     qvnn = k*sin(qvn)/qvnn
-    return [k*cos(qvn); qx*qvnn; qy*qvnn; qz*qvnn]
+    return (k*cos(qvn), qx*qvnn, qy*qvnn, qz*qvnn)
 end
 
 """
@@ -362,15 +362,15 @@ Compute the logarithm of the input quaternion.
 @inline function q_log(q)
     qs, qx, qy, qz = q
     vNorm = sqrt(qx*qx + qy*qy + qz*qz)
-    if vNorm == 0.0
+    if iszero(vNorm)
         vNorm = 1.0
     end
     nq = norm(q)
-    vNorm = acos(qs/nq)/vNorm
-    return [log(nq); qx*vNorm; qy*vNorm; qz*vNorm]
+    vNorm = acos(qs / nq) / vNorm
+    return (log(nq), qx*vNorm, qy*vNorm, qz*vNorm)
 end
 
-@inline q_power(q, n) = q_exp(n .* q_log(q))
+@inline q_power(q, n) = q_exp(n*q_log(q))
 
 """
     q = q_slerp(q0, q1, τ)
@@ -390,5 +390,9 @@ end
 
 function q_fromZaxis(zB_A)
     zB_A = normalize(zB_A)
-    return q_fromDcm([nullspace(zB_A') zB_A])
+    _, i = findmin(abs, zB_A)
+    v = i == 1 ? Quats.ex : i == 2 ? Quats.ey : Quats.ez
+    xB_A = normalize(cross(zB_A, v))
+    yB_A = cross(zB_A, xB_A)
+    return q_fromAxes(xB_A, yB_A, zB_A)     # q_AB
 end

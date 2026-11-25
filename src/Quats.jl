@@ -6,6 +6,7 @@ using LinearAlgebra
 const ex = (1.0, 0.0, 0.0)
 const ey = (0.0, 1.0, 0.0)
 const ez = (0.0, 0.0, 1.0)
+const I3 = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
 
 export Vector3, Quaternion, Matrix3x3
 export toVector, toVector!, toMatrix, toMatrix!
