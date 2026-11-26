@@ -14,11 +14,8 @@ Mutliply the two input quaternions as follows:
 q_{AC} = q_{AB} ⊗ q_{BC}
 ```
 """
-@inline q_multiply(q_AB, q_BC) = toVector(q_multiplyCore(q_AB, q_BC))
-@inline q_multiply(q_AB::Quaternion, q_BC::Quaternion) = q_multiplyCore(q_AB, q_BC)
-@inline q_multiply(q_AB::Quaternion, q_BC::AbstractVector) = q_multiplyCore(q_AB, q_BC)
-@inline q_multiply(q_AB::AbstractVector, q_BC::Quaternion) = q_multiplyCore(q_AB, q_BC)
-
+@inline q_multiply(q_AB::AbstractVector, q_BC::AbstractVector) = toVector(q_multiplyCore(q_AB, q_BC))
+@inline q_multiply(q_AB, q_BC) = q_multiplyCore(q_AB, q_BC)
 @inline q_multiply!(q_AC, q_AB, q_BC) = q_AC .= q_multiplyCore(q_AB, q_BC)
 @inline q_multiply!(q1, q2) = q1 .= q_multiplyCore(q1, q2)      # q1 is modified in-place
 
@@ -60,8 +57,8 @@ R_{AB}(q_{AB}) = I + 2qₛ[qᵥ×] + 2[qᵥ×]²
 ```
 """
 @inline q_toDcm(q_AB::AbstractVector) = toMatrix(q_toDcmCore(q_AB))
-@inline q_toDcm(q_AB::Quaternion) = q_toDcmCore(q_AB)
-@inline q_toDcm!(R_AB::AbstractMatrix, q_AB) = toMatrix!(R_AB, q_toDcmCore(q_AB))
+@inline q_toDcm(q_AB) = q_toDcmCore(q_AB)
+@inline q_toDcm!(R_AB, q_AB) = toMatrix!(R_AB, q_toDcmCore(q_AB))
 
 """
     q_AB = q_fromDcm(R_AB)
@@ -69,35 +66,33 @@ R_{AB}(q_{AB}) = I + 2qₛ[qᵥ×] + 2[qᵥ×]²
 Translate the input rotation matrix into a unitary quaternion.
 """
 @inline q_fromDcm(R_AB::AbstractMatrix) = toVector(q_fromDcmCore(R_AB))
-@inline q_fromDcm(R_AB::Matrix3x3) = q_fromDcmCore(R_AB)
-@inline q_fromDcm!(q_AB::AbstractVector, R_AB) = q_AB .= q_fromDcmCore(R_AB)
+@inline q_fromDcm(R_AB) = q_fromDcmCore(R_AB)
+@inline q_fromDcm!(q_AB, R_AB) = q_AB .= q_fromDcmCore(R_AB)
 
 """
     q_AB = q_fromAxes(xB_A, yB_A, zB_A)
 
 Compute the attitude quaternion given as input the axes of a reference frame.
 """
-@inline q_fromAxes!(q_AB::AbstractVector, xB_A, yB_A, zB_A) = q_AB .= q_fromAxesCore(xB_A, yB_A, zB_A)
-@inline q_fromAxes(xB_A::Vector3, yB_A::Vector3, zB_A::Vector3) = q_fromAxesCore(xB_A, yB_A, zB_A)
 @inline q_fromAxes(xB_A::AbstractVector, yB_A::AbstractVector, zB_A::AbstractVector) = toVector(q_fromAxesCore(xB_A, yB_A, zB_A))
+@inline q_fromAxes(xB_A, yB_A, zB_A) = q_fromAxesCore(xB_A, yB_A, zB_A)
+@inline q_fromAxes!(q_AB, xB_A, yB_A, zB_A) = q_AB .= q_fromAxesCore(xB_A, yB_A, zB_A)
 
 """
     q_random()
 
 Generate a random unitary quaternion.
 """
-@inline q_random() = normalize!(randn(4))
-@inline q_random(rng) = normalize!(randn(rng, 4))
+@inline q_random() = normalize(randn4())
+@inline q_random(rng) = normalize(randn4(rng))
 
 """
     v_A = q_transformVector(q_AB, v_B)
 
 Project the vector v from frame B into frame A.
 """
-@inline q_transformVector(q_AB, v_B) = toVector(q_transformVectorCore(q_AB, v_B))
-@inline q_transformVector(q_AB::AbstractVector, v_B::Vector3) = q_transformVectorCore(q_AB, v_B)
-@inline q_transformVector(q_AB::Quaternion, v_B::AbstractVector) = q_transformVectorCore(q_AB, v_B)
-@inline q_transformVector(q_AB::Quaternion, v_B::Vector3) = q_transformVectorCore(q_AB, v_B)
+@inline q_transformVector(q_AB::AbstractVector, v_B::AbstractVector) = toVector(q_transformVectorCore(q_AB, v_B))
+@inline q_transformVector(q_AB, v_B) = q_transformVectorCore(q_AB, v_B)
 @inline q_transformVector!(v_A, q_AB, v_B) = v_A .= q_transformVectorCore(q_AB, v_B)
 
 """
@@ -105,10 +100,8 @@ Project the vector v from frame B into frame A.
 
 Project the vector v from frame B into frame A, using q_BA.
 """
-@inline q_transformVectorT(q_BA, v_B) = toVector(q_transformVectorCore(q_transposeCore(q_BA), v_B))
-@inline q_transformVectorT(q_BA::AbstractVector, v_B::Vector3) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
-@inline q_transformVectorT(q_BA::Quaternion, v_B::AbstractVector) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
-@inline q_transformVectorT(q_BA::Quaternion, v_B::Vector3) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
+@inline q_transformVectorT(q_BA::AbstractVector, v_B::AbstractVector) = toVector(q_transformVectorCore(q_transposeCore(q_BA), v_B))
+@inline q_transformVectorT(q_BA, v_B) = q_transformVectorCore(q_transposeCore(q_BA), v_B)
 @inline q_transformVectorT!(v_A, q_BA, v_B) = v_A .= q_transformVectorCore(q_transposeCore(q_BA), v_B)
 
 """
@@ -117,10 +110,8 @@ Project the vector v from frame B into frame A, using q_BA.
 Transpose the input quaternion.
 """
 @inline q_transpose(q::AbstractVector) = toVector(q_transposeCore(q))
-@inline q_transpose(q::Quaternion) = q_transposeCore(q)
-@inline q_transpose!(q::AbstractVector) = q .= q_transposeCore(q)
-@inline q_transpose!(qt::AbstractVector, q::Quaternion) = qt .= q_transposeCore(q)
-@inline q_transpose!(qt::AbstractVector, q::AbstractVector) = qt .= q_transposeCore(q)
+@inline q_transpose(q) = q_transposeCore(q)
+@inline q_transpose!(qt, q) = qt .= q_transposeCore(q)
 
 """
     q̇_AB = q_derivative(q_AB, ωAB_B)
@@ -135,11 +126,9 @@ q̇_{AB} = \\frac{1}{2} q_{AB} ⊗ [0; ω^B_{AB}]
 where ```ωAB_B``` represents the angular velocity of frame ``B`` with respect to
 frame ``A``, projected into frame ``B``.
 """
-@inline q_derivative(q_AB, ωAB_B) = toVector(q_derivativeCore(q_AB, ωAB_B))
-@inline q_derivative(q_AB::Quaternion, ωAB_B) = q_derivativeCore(q_AB, ωAB_B)
-@inline q_derivative(q_AB, ωAB_B::Vector3) = q_derivativeCore(q_AB, ωAB_B)
+@inline q_derivative(q_AB::AbstractVector, ωAB_B::AbstractVector) = toVector(q_derivativeCore(q_AB, ωAB_B))
+@inline q_derivative(q_AB, ωAB_B) = q_derivativeCore(q_AB, ωAB_B)
 @inline q_derivative!(dq_AB, q_AB, ωAB_B) = dq_AB .= q_derivativeCore(q_AB, ωAB_B)
-
 
 @inline q_rotx!(q, θ) = q .= q_rotx(θ)
 @inline q_roty!(q, θ) = q .= q_roty(θ)
@@ -155,8 +144,8 @@ q_fromAxisAngle(u, θ) = iszero(u) ? q_identity() : [cos(0.5θ); sin(0.5θ)*norm
 function q_fromAxisAngle(u::Vector3, θ)
     iszero(u) && return (1.0, 0.0, 0.0, 0.0)
     x, y, z = normalize(u)
-    sθ, cθ = sincos(θ/2)
-    return (cθ, x*sθ, y*sθ, z*sθ)
+    sθ, cθ = sincos(θ / 2)
+    return cθ, x*sθ, y*sθ, z*sθ
 end
 
 function q_fromAxisAngle!(q, u, θ)
@@ -197,10 +186,10 @@ end
 Compute the inverse of the input quaternion.
 """
 @inline q_inverse(q::AbstractVector) = toVector(q_inverseCore(q))
-@inline q_inverse(q::Vector3) = q_inverseCore(q)
+@inline q_inverse(q) = q_inverseCore(q)
 
 @inline q_toRv(q::AbstractVector) = toVector(q_toRvCore(q))
-@inline q_toRv(q::Vector3)= q_toRvCore(q)
+@inline q_toRv(q)= q_toRvCore(q)
 
 @inline q_fromRv(ϕ) = q_fromAxisAngle(ϕ, norm(ϕ))
 @inline q_fromRv!(q, ϕ) = q_fromAxisAngle!(q, ϕ, norm(ϕ))

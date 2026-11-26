@@ -83,10 +83,7 @@ function q_transformVectorCore(q_AB, v_B)
     return xo, yo, zo
 end
 
-@inline function q_transposeCore(q)
-    qs, qx, qy, qz = q
-    return qs, -qx, -qy, -qz
-end
+@inline q_transposeCore(q) = q[1], -q[2], -q[3], -q[4]
 
 function q_inverseCore(q)
     qs, qx, qy, qz = q
@@ -108,8 +105,7 @@ end
 @inline function q_toRvCore(q)
     qs, qx, qy, qz = q
     nqv = sqrt(qx*qx + qy*qy + qz*qz)
-    iszero(nqv) && return zero(qx), zero(qy), zero(qz)
-    f = 2*atan(nqv, qs) / nqv
+    f = 2*atan(nqv, qs) / ifelse(iszero(nqv), one(nqv), nqv)
     return f*qx, f*qy, f*qz
 end
 
@@ -201,7 +197,8 @@ end
     qs, qx, qy, qz = qNominal
 
     imax = findmax(abs, qNominal)[2]
-    sgn = sign(qNominal[imax]) == sign(q[imax]) ? 2 : -2
+    sgn = copysign(2.0, qNominal[imax] * q[imax])
+    # sgn = sign(qNominal[imax]) == sign(q[imax]) ? 2 : -2
 
     θx = (-px*qs + ps*qx + pz*qy - py*qz)*sgn
     θy = (-py*qs - pz*qx + ps*qy + px*qz)*sgn

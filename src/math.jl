@@ -9,6 +9,7 @@ const Matrix3x3{T} = NTuple{9, T}
 @inline randn3(rng) = (randn(rng), randn(rng), randn(rng))
 @inline rand3() = (rand(), rand(), rand())
 @inline rand3(rng) = (rand(rng), rand(rng), rand(rng))
+@inline randn4() = (randn(), randn(), randn(), randn())
 @inline randn4(rng) = (randn(rng), randn(rng), randn(rng), randn(rng))
 @inline sum3(a, b) = a[1]+b[1], a[2]+b[2], a[3]+b[3]
 @inline subt3(a, b) = a[1]-b[1], a[2]-b[2], a[3]-b[3]
@@ -30,11 +31,8 @@ end
 @inline dprod3core(a, b) = (a[1]*b[1], a[2]*b[1], a[3]*b[1], a[1]*b[2], a[2]*b[2], a[3]*b[2], a[1]*b[3], a[2]*b[3], a[3]*b[3])
 
 # Dyadic product of two vectors, i.e., a * b'
-@inline dprod3(a::AbstractVector, b::AbstractVector) = toMatrix(dprod3core(a, b))
-@inline dprod3(a::Vector3, b::AbstractVector) = dprod3core(a, b)
-@inline dprod3(a::AbstractVector, b::Vector3) = dprod3core(a, b)
-@inline dprod3(a::Vector3, b::Vector3) = dprod3core(a, b)
-@inline dprod3(a) = dprod3(a, a)
+@inline dprod3(a::AbstractVector, b::AbstractVector=a) = toMatrix(dprod3core(a, b))
+@inline dprod3(a, b=a) = dprod3core(a, b)
 
 function crossSq3(a, b)
     a1, a2, a3 = a
@@ -62,19 +60,19 @@ end
 
 # VECTOR FUNCTIONS ----------------------------------------------------------------------- #
 @inline Base.iszero(a::Vector3) = all(iszero, a)
-@inline Base.:+(a::Vector3, b::Vector3) = sum3(a, b)         # Sum
-@inline Base.:+(a::Vector3, b::AbstractVector) = sum3(a, b)  # Sum
-@inline Base.:+(a::AbstractVector, b::Vector3) = sum3(a, b)  # Sum
+@inline Base.:+(a::Vector3, b::Vector3) = sum3(a, b)                # Sum
+@inline Base.:+(a::Vector3, b::AbstractVector) = sum3(a, b)         # Sum
+@inline Base.:+(a::AbstractVector, b::Vector3) = sum3(a, b)         # Sum
 
-@inline Base.:-(v::Vector3) = (-v[1], -v[2], -v[3])                   # Unary minus
+@inline Base.:-(v::Vector3) = (-v[1], -v[2], -v[3])                 # Unary minus
 
-@inline Base.:-(a::Vector3, b::Vector3) = subt3(a, b)         # Subtraction
-@inline Base.:-(a::Vector3, b::AbstractVector) = subt3(a, b)  # Subtraction
-@inline Base.:-(a::AbstractVector, b::Vector3) = subt3(a, b)  # Subtraction
+@inline Base.:-(a::Vector3, b::Vector3) = subt3(a, b)               # Subtraction
+@inline Base.:-(a::Vector3, b::AbstractVector) = subt3(a, b)        # Subtraction
+@inline Base.:-(a::AbstractVector, b::Vector3) = subt3(a, b)        # Subtraction
 
-@inline Base.:*(a::Vector3, s::Number) = smult3(s, a)              # Scalar multiplication
-@inline Base.:*(s::Number, a::Vector3) = smult3(s, a)              # Scalar multiplication
-@inline Base.:/(a::Vector3, s::Number) = smult3(1/s, a)            # Scalar division
+@inline Base.:*(a::Vector3, s::Number) = smult3(s, a)               # Scalar multiplication
+@inline Base.:*(s::Number, a::Vector3) = smult3(s, a)               # Scalar multiplication
+@inline Base.:/(a::Vector3, s::Number) = smult3(1/s, a)             # Scalar division
 @inline Base.zero(::Type{Vector3{T}}) where {T} = (zero(T), zero(T), zero(T))
 
 @inline LinearAlgebra.dot(a::Vector3, b::Vector3) = dot3(a, b)
@@ -84,13 +82,11 @@ end
 @inline LinearAlgebra.cross(a::Vector3, b::Vector3) = cross3(a, b)
 @inline LinearAlgebra.cross(a::Vector3, b::AbstractVector) = cross3(a, b)
 @inline LinearAlgebra.cross(a::AbstractVector, b::Vector3) = cross3(a, b)
-@inline LinearAlgebra.transpose(a::Vector3) = toVector(a)'  #This allocates, but it is sometimes needed
-@inline LinearAlgebra.adjoint(a::Vector3) = toVector(a)'  #This allocates, but it is sometimes needed
+@inline LinearAlgebra.transpose(a::Vector3) = toVector(a)'          # This allocates, but it is sometimes needed
+@inline LinearAlgebra.adjoint(a::Vector3) = toVector(a)'            # This allocates, but it is sometimes needed
 
 @inline crossSq(a::AbstractVector, b::AbstractVector) = toVector(crossSq3(a, b))
-@inline crossSq(a::Vector3, b::Vector3) = crossSq3(a, b)
-@inline crossSq(a::Vector3, b::AbstractVector) = crossSq3(a, b)
-@inline crossSq(a::AbstractVector, b::Vector3) = crossSq3(a, b)
+@inline crossSq(a, b) = crossSq3(a, b)
 
 @inline LinearAlgebra.norm(a::Vector3, p::Real=2) =
     p == 2 ? sqrt(dot(a, a)) :
@@ -191,7 +187,7 @@ end
 @inline Base.:+(A::Matrix3x3, B::Matrix3x3) = madd3x3(A, B)             # Sum
 @inline Base.:+(A::Matrix3x3, B::AbstractMatrix) = madd3x3(A, B)        # Sum
 @inline Base.:+(A::AbstractMatrix, B::Matrix3x3) = madd3x3(A, B)        # Sum
-@inline Base.:+(A::Matrix3x3, B::UniformScaling) = madd3x3(A, B)             # Sum
+@inline Base.:+(A::Matrix3x3, B::UniformScaling) = madd3x3(A, B)        # Sum
 
 @inline Base.:-(M::Matrix3x3) = (-M[1], -M[2], -M[3], -M[4], -M[5], -M[6], -M[7], -M[8], -M[9])     # Unary minus
 @inline Base.:-(A::Matrix3x3, B::Matrix3x3) = msubt3x3(A, B)            # Subtraction

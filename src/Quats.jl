@@ -11,7 +11,7 @@ const I3 = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
 export Vector3, Quaternion, Matrix3x3
 export toVector, toVector!, toMatrix, toMatrix!
 export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3, dprod3, getij
-export randn3, zeros3, rand3, evalpoly3
+export randn3, zeros3, rand3, evalpoly3, randn4
 include("math.jl")
 
 export crossMat, crossMat!, crossMatSq, crossMatSq!
