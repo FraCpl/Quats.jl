@@ -23,9 +23,9 @@ export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3, vmul3, vmul3!, getij
 export randn3, zeros3, rand3, randn4, rand4
 export crossMat, crossMat!, crossMatSq, crossMatSq!
 export cross!, crossSq!, addCross!, addCrossSq!, crossSq
+export q_zero
 include("math.jl")
 
-include("qCore.jl")
 export q_multiply,
     q_fromAxes,
     q_random,
@@ -39,7 +39,6 @@ export q_multiply,
     q_toAxes,
     q_toDcm,
     q_inverse,
-    q_identity,
     q_toRv,
     q_fromRv,
     q_fromRv!,

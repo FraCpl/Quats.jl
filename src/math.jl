@@ -62,19 +62,19 @@ end
 
 # VECTOR FUNCTIONS ----------------------------------------------------------------------- #
 @inline Base.iszero(a::Vec3) = all(iszero, a)
-@inline Base.:+(a::Vec3, b::Vec3) = sum3(a, b)                # Sum
-@inline Base.:+(a::Vec3, b::AbstractVector) = sum3(a, b)         # Sum
-@inline Base.:+(a::AbstractVector, b::Vec3) = sum3(a, b)         # Sum
+@inline Base.:+(a::Vec3, b::Vec3) = sum3(a, b)                      # Sum
+@inline Base.:+(a::Vec3, b::AbstractVector) = sum3(a, b)            # Sum
+@inline Base.:+(a::AbstractVector, b::Vec3) = sum3(a, b)            # Sum
 
-@inline Base.:-(v::Vec3) = (-v[1], -v[2], -v[3])                 # Unary minus
+@inline Base.:-(v::Vec3) = (-v[1], -v[2], -v[3])                    # Unary minus
 
-@inline Base.:-(a::Vec3, b::Vec3) = subt3(a, b)               # Subtraction
-@inline Base.:-(a::Vec3, b::AbstractVector) = subt3(a, b)        # Subtraction
-@inline Base.:-(a::AbstractVector, b::Vec3) = subt3(a, b)        # Subtraction
+@inline Base.:-(a::Vec3, b::Vec3) = subt3(a, b)                     # Subtraction
+@inline Base.:-(a::Vec3, b::AbstractVector) = subt3(a, b)           # Subtraction
+@inline Base.:-(a::AbstractVector, b::Vec3) = subt3(a, b)           # Subtraction
 
-@inline Base.:*(a::Vec3, s::Number) = smult3(s, a)               # Scalar multiplication
-@inline Base.:*(s::Number, a::Vec3) = smult3(s, a)               # Scalar multiplication
-@inline Base.:/(a::Vec3, s::Number) = smult3(1/s, a)             # Scalar division
+@inline Base.:*(a::Vec3, s::Number) = smult3(s, a)                  # Scalar multiplication
+@inline Base.:*(s::Number, a::Vec3) = smult3(s, a)                  # Scalar multiplication
+@inline Base.:/(a::Vec3, s::Number) = smult3(1/s, a)                # Scalar division
 @inline Base.zero(::Type{Vec3{T}}) where {T} = (zero(T), zero(T), zero(T))
 
 @inline LinearAlgebra.dot(a::Vec3, b::Vec3) = dot3(a, b)
@@ -95,7 +95,7 @@ end
 
 @inline Vec3(v::AbstractVector) = (v[1], v[2], v[3])
 @inline toVector(v::Vec3) = [v[1], v[2], v[3]]
-@inline toVector!(v::AbstractVector, a::Vec3) = v .= a
+@inline Base.copyto!(v::AbstractVector, a::Vec3) = v .= a
 
 function crossMat3core(v)
     x, y, z = v
@@ -158,7 +158,7 @@ Compute a = a + b × (b × c).
 
 # QUATERNION FUNCTIONS ------------------------------------------------------------------- #
 @inline Quat(q::AbstractVector) = (q[1], q[2], q[3], q[4])
-@inline Base.iszero(a::Quat) = all(iszero, a)
+@inline q_zero() = (1.0, 0.0, 0.0, 0.0)
 @inline Base.:*(s::Number, a::Quat) = (s*a[1], s*a[2], s*a[3], s*a[4])               # Scalar multiplication
 @inline Base.:*(a::Quat, s::Number) = (s*a[1], s*a[2], s*a[3], s*a[4])               # Scalar multiplication
 @inline Base.:/(a::Quat, s::Number) = (a[1]/s, a[2]/s, a[3]/s, a[4]/s)               # Scalar division
@@ -171,7 +171,7 @@ Compute a = a + b × (b × c).
 @inline LinearAlgebra.adjoint(q::Quat) = (q[1], -q[2], -q[3], -q[4])
 
 @inline toVector(q::Quat) = [q[1], q[2], q[3], q[4]]
-@inline toVector!(v::AbstractVector, q::Quat) = v .= q
+@inline Base.copyto!(v::AbstractVector, q::Quat) = v .= q
 
 # MATRIX FUNCTIONS ----------------------------------------------------------------------- #
 @inline mrow3(R::AbstractMatrix, i) = (R[i, 1], R[i, 2], R[i, 3])
@@ -191,6 +191,7 @@ end
     return (a13, a23, a33)
 end
 
+# A + B
 function madd3x3(A, B)
     a11, a21, a31, a12, a22, a32, a13, a23, a33 = A
     b11, b21, b31, b12, b22, b32, b13, b23, b33 = B
@@ -201,6 +202,7 @@ function madd3x3(A, B)
     return (c11, c21, c31, c12, c22, c32, c13, c23, c33)
 end
 
+# A - B
 function msubt3x3(A, B)
     a11, a21, a31, a12, a22, a32, a13, a23, a33 = A
     b11, b21, b31, b12, b22, b32, b13, b23, b33 = B
@@ -211,6 +213,7 @@ function msubt3x3(A, B)
     return (c11, c21, c31, c12, c22, c32, c13, c23, c33)
 end
 
+# A * B
 function mmult3x3(A, B)
     a11, a21, a31, a12, a22, a32, a13, a23, a33 = A
     b11, b21, b31, b12, b22, b32, b13, b23, b33 = B
@@ -240,10 +243,10 @@ end
 @inline Base.:*(A::AbstractMatrix, B::Mat3) = mmult3x3(A, B)       # Matrix-matrix multiplication
 @inline Base.:*(A::Mat3, B::AbstractMatrix) = mmult3x3(A, B)       # Matrix-matrix multiplication
 
-@inline Base.:+(A::Mat3, B::Mat3) = madd3x3(A, B)             # Sum
-@inline Base.:+(A::Mat3, B::AbstractMatrix) = madd3x3(A, B)        # Sum
-@inline Base.:+(A::AbstractMatrix, B::Mat3) = madd3x3(A, B)        # Sum
-@inline Base.:+(A::Mat3, B::UniformScaling) = madd3x3(A, B)        # Sum
+@inline Base.:+(A::Mat3, B::Mat3) = madd3x3(A, B)                   # Sum
+@inline Base.:+(A::Mat3, B::AbstractMatrix) = madd3x3(A, B)         # Sum
+@inline Base.:+(A::AbstractMatrix, B::Mat3) = madd3x3(A, B)         # Sum
+@inline Base.:+(A::Mat3, B::UniformScaling) = madd3x3(A, B)         # Sum
 
 @inline Base.:-(M::Mat3) = (-M[1], -M[2], -M[3], -M[4], -M[5], -M[6], -M[7], -M[8], -M[9])     # Unary minus
 @inline Base.:-(A::Mat3, B::Mat3) = msubt3x3(A, B)            # Subtraction
@@ -264,7 +267,8 @@ end
 end
 
 @inline toMatrix(M::Mat3) = [M[1] M[4] M[7]; M[2] M[5] M[8]; M[3] M[6] M[9]]
-@inline function toMatrix!(Mout::AbstractMatrix, M::Mat3)
+
+@inline function Base.copyto!(Mout::AbstractMatrix, M::Mat3)
     @inbounds for i in 1:9
         Mout[i] = M[i]
     end
