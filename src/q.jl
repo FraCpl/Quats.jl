@@ -310,18 +310,18 @@ end
 
 # (θ1=θ_AB, θ2=θ_BC, θ3=θ_CD) --> q_AD
 @inline q_fromEuler(θ1, θ2, θ3, s::Symbol=:zyx) = q_fromEuler(θ1, θ2, θ3, Val(s))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyz}) = q_rotx(θ1) * q_roty(θ2) * q_rotz(θ3)#q_fromSequence((θ1, θ2, θ3), (1, 2, 3))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzy}) = q_rotx(θ1) * q_rotz(θ2) * q_roty(θ3)#q_fromSequence((θ1, θ2, θ3), (1, 3, 2))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxz}) = q_roty(θ1) * q_rotx(θ2) * q_rotz(θ3)#q_fromSequence((θ1, θ2, θ3), (2, 1, 3))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzx}) = q_roty(θ1) * q_rotz(θ2) * q_rotx(θ3)#q_fromSequence((θ1, θ2, θ3), (2, 3, 1))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxy}) = q_rotz(θ1) * q_rotx(θ2) * q_roty(θ3)#q_fromSequence((θ1, θ2, θ3), (3, 1, 2))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyx}) = q_rotz(θ1) * q_roty(θ2) * q_rotx(θ3)#q_fromSequence((θ1, θ2, θ3), (3, 2, 1))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyx}) = q_rotx(θ1) * q_roty(θ2) * q_rotx(θ3)#q_fromSequence((θ1, θ2, θ3), (1, 2, 1))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzx}) = q_rotx(θ1) * q_rotz(θ2) * q_rotx(θ3)#q_fromSequence((θ1, θ2, θ3), (1, 3, 1))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxy}) = q_roty(θ1) * q_rotx(θ2) * q_roty(θ3)#q_fromSequence((θ1, θ2, θ3), (2, 1, 2))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzy}) = q_roty(θ1) * q_rotz(θ2) * q_roty(θ3)#q_fromSequence((θ1, θ2, θ3), (2, 3, 2))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxz}) = q_rotz(θ1) * q_rotx(θ2) * q_rotz(θ3)#q_fromSequence((θ1, θ2, θ3), (3, 1, 3))
-@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyz}) = q_rotz(θ1) * q_roty(θ2) * q_rotz(θ3)#q_fromSequence((θ1, θ2, θ3), (3, 2, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyz}) = q_multiplyn(q_rotx(θ1), q_roty(θ2), q_rotz(θ3))#q_fromSequence((θ1, θ2, θ3), (1, 2, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzy}) = q_multiplyn(q_rotx(θ1), q_rotz(θ2), q_roty(θ3))#q_fromSequence((θ1, θ2, θ3), (1, 3, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxz}) = q_multiplyn(q_roty(θ1), q_rotx(θ2), q_rotz(θ3))#q_fromSequence((θ1, θ2, θ3), (2, 1, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzx}) = q_multiplyn(q_roty(θ1), q_rotz(θ2), q_rotx(θ3))#q_fromSequence((θ1, θ2, θ3), (2, 3, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxy}) = q_multiplyn(q_rotz(θ1), q_rotx(θ2), q_roty(θ3))#q_fromSequence((θ1, θ2, θ3), (3, 1, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyx}) = q_multiplyn(q_rotz(θ1), q_roty(θ2), q_rotx(θ3))#q_fromSequence((θ1, θ2, θ3), (3, 2, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xyx}) = q_multiplyn(q_rotx(θ1), q_roty(θ2), q_rotx(θ3))#q_fromSequence((θ1, θ2, θ3), (1, 2, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:xzx}) = q_multiplyn(q_rotx(θ1), q_rotz(θ2), q_rotx(θ3))#q_fromSequence((θ1, θ2, θ3), (1, 3, 1))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yxy}) = q_multiplyn(q_roty(θ1), q_rotx(θ2), q_roty(θ3))#q_fromSequence((θ1, θ2, θ3), (2, 1, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:yzy}) = q_multiplyn(q_roty(θ1), q_rotz(θ2), q_roty(θ3))#q_fromSequence((θ1, θ2, θ3), (2, 3, 2))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zxz}) = q_multiplyn(q_rotz(θ1), q_rotx(θ2), q_rotz(θ3))#q_fromSequence((θ1, θ2, θ3), (3, 1, 3))
+@inline q_fromEuler(θ1, θ2, θ3, ::Val{:zyz}) = q_multiplyn(q_rotz(θ1), q_roty(θ2), q_rotz(θ3))#q_fromSequence((θ1, θ2, θ3), (3, 2, 3))
 
 
 """
@@ -343,7 +343,7 @@ end
 
 Compute the logarithm of the input quaternion.
 """
-@inline function q_log(q)
+@inline function q_log(q, n=1)
     qs, qx, qy, qz = q
     vNorm = sqrt(qx*qx + qy*qy + qz*qz)
     if iszero(vNorm)
@@ -351,10 +351,10 @@ Compute the logarithm of the input quaternion.
     end
     nq = norm(q)
     vNorm = acos(qs / nq) / vNorm
-    return (log(nq), qx*vNorm, qy*vNorm, qz*vNorm)
+    return (n*log(nq), n*qx*vNorm, n*qy*vNorm, n*qz*vNorm)
 end
 
-@inline q_power(q, n) = q_exp(n*q_log(q))
+@inline q_power(q, n) = q_exp(q_log(q, n))
 
 """
     q = q_slerp(q0, q1, τ)
@@ -364,7 +364,7 @@ Compute the spherical linear interpolation between two quaternions at τ, where 
 @inline q_slerp(q0, q1, τ) = q_multiply(q0, q_power(q_multiply(q_transpose(q0), q1), τ))
 
 @inline function q_interp(t, q, ti)
-    id0 = findlast(ti .≥ t)
+    id0 = findlast(≥(t), ti)
     id1 = min(id0+1, length(t))
     return q_slerp(q[id0], q[id1], (ti - t[id0])/(t[id1] - t[id0]))
 end

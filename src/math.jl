@@ -90,12 +90,7 @@ end
 @inline crossSq(a::AbstractVector, b::AbstractVector) = toVector(crossSq3(a, b))
 @inline crossSq(a, b) = crossSq3(a, b)
 
-@inline LinearAlgebra.norm(a::Vec3, p::Real=2) =
-    p == 2 ? sqrt(dot(a, a)) :
-    p == Inf ? maximum(abs, a) :
-    p == 1 ? sum(abs, a) :
-    sum(abs(x)^p for x in a)^(1/p)
-
+@inline LinearAlgebra.norm(a::Vec3) = sqrt(dot3(a, a))
 @inline LinearAlgebra.normalize(a::Vec3) = a / norm(a)
 
 @inline Vec3(v::AbstractVector) = (v[1], v[2], v[3])
@@ -167,9 +162,9 @@ Compute a = a + b × (b × c).
 @inline Base.:*(s::Number, a::Quat) = (s*a[1], s*a[2], s*a[3], s*a[4])               # Scalar multiplication
 @inline Base.:*(a::Quat, s::Number) = (s*a[1], s*a[2], s*a[3], s*a[4])               # Scalar multiplication
 @inline Base.:/(a::Quat, s::Number) = (a[1]/s, a[2]/s, a[3]/s, a[4]/s)               # Scalar division
-@inline Base.:*(p::Quat, q::Quat) = q_multiplyCore(p, q)
-@inline Base.:*(v::Vec3{T}, q::Quat) where {T} = q_multiplyCore((zero(T), v[1], v[2], v[3]), q)
-@inline Base.:*(q::Quat, v::Vec3{T}) where {T} = q_multiplyCore(q, (zero(T), v[1], v[2], v[3]))
+# @inline Base.:*(p::Quat, q::Quat) = q_multiplyCore(p, q)
+# @inline Base.:*(v::Vec3{T}, q::Quat) where {T} = q_multiplyCore((zero(T), v[1], v[2], v[3]), q)
+# @inline Base.:*(q::Quat, v::Vec3{T}) where {T} = q_multiplyCore(q, (zero(T), v[1], v[2], v[3]))
 @inline LinearAlgebra.norm(q::Quat) = sqrt(q[1]*q[1] + q[2]*q[2] + q[3]*q[3] + q[4]*q[4])
 @inline LinearAlgebra.normalize(q::Quat) = q / norm(q)
 @inline LinearAlgebra.conj(q::Quat) = (q[1], -q[2], -q[3], -q[4])
