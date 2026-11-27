@@ -3,20 +3,19 @@
 module Quats
 using LinearAlgebra
 
+# Useful constants
 const ex = (1.0, 0.0, 0.0)
 const ey = (0.0, 1.0, 0.0)
 const ez = (0.0, 0.0, 1.0)
 const I3 = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
 
-export Vector3, Quaternion, Matrix3x3
+export Vec3, Quat, Mat3
 export toVector, toVector!, toMatrix, toMatrix!
-export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3, dprod3, getij
+export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3, vmul3, vmul3!, getij
 export randn3, zeros3, rand3, evalpoly3, randn4
-include("math.jl")
-
 export crossMat, crossMat!, crossMatSq, crossMatSq!
-export cross!, crossSq!, addCross!, addCrossSq!, crossMatStatic, crossMatSqStatic, crossSq
-include("cross.jl")
+export cross!, crossSq!, addCross!, addCrossSq!, crossSq
+include("math.jl")
 
 include("qCore.jl")
 export q_multiply,
@@ -73,24 +72,15 @@ export q_multiply,
     q_rotz!
 include("q.jl")
 
-export dcm_random,
-    dcm_fromAxisAngle,
-    dcm_toQuaternion,
-    dcm_fromQuaternion,
-    dcm_toEuler,
-    dcm_toRv,
-    dcm_fromRv,
-    dcm_fromEuler,
-    dcm_fromAxes,
+export dcm_fromAxes,
     dcm_fromAxes!,
-    dcm_rotAxis,
     dcm_normalize,
     dcm_rotx,
     dcm_roty,
     dcm_rotz
 include("dcm.jl")
 
-export rv_toQuaternion, rv_fromQuaternion, rv_derivative, rv_fromDcm, rv_toDcm
+export rv_derivative
 include("rv.jl")
 
 export transformFrame, transformFrameInv

@@ -6,7 +6,7 @@ function TEST_rots()
     N = 100000
     v_A = [randn(3) for _ in 1:N]
     vq_A = [[0.0; v_A[i]] for i in 1:N]
-    R_BA = [dcm_random() for _ in 1:N]
+    R_BA = [q_toDcm(q_random()) for _ in 1:N]
     q_BA = q_fromDcm.(R_BA)
     q_AB = q_transpose.(q_BA)
     v1_B = [R_BA[i]*v_A[i] for i in 1:N]
@@ -14,17 +14,10 @@ function TEST_rots()
     vq3_B = q_multiply.(q_BA, q_multiply.(vq_A, q_AB))
     v3_B = [vq3_B[i][2:4] for i in 1:N]
 
-    axis = normalize(randn(3))
-    angle = 2π*rand()
-
-    R1 = q_toDcm(q_fromAxisAngle(axis, angle))
-    R2 = dcm_fromAxisAngle(axis, angle)
-
     ε = maximum([
         maximum(norm.(v1_B - v2_B));
         maximum(norm.(v1_B - v3_B));
         maximum(norm.(q_toDcm.(q_BA) - R_BA));
-        maximum(norm.(R1 - R2))
     ])
     return ε
 end
@@ -32,11 +25,11 @@ end
 function TEST_qMultiplyn()
     q = [q_random() for _ in 1:4]
     qTrue = q_multiply(q[1], q_multiply(q[2], q_multiply(q[3], q[4])))
-    qOut = q_random()
+    qOut = zeros(4)
 
-    err1 = q_multiplyn(q...) - qTrue
+    err1 = q_multiplyn(q...) .- qTrue
     q_multiplyn!(qOut, q...)
-    err2 = qOut - qTrue
+    err2 = qOut .- qTrue
     return max(maximum(abs, err1), maximum(abs, err2))
 end
 
@@ -44,19 +37,19 @@ function TEST_qMultiply()
     p = q_random()
     q = q_random()
 
-    ps = p[1]; pv = p[2:4]
-    qs = q[1]; qv = q[2:4]
+    ps = p[1]; pv = toVector(p[2:4])
+    qs = q[1]; qv = toVector(q[2:4])
 
     pq = q_multiply(p, q)
     pqTrue = [ps*qs - dot(pv, qv); ps*qv + qs*pv + cross(pv, qv)]
-    return norm(pq - pqTrue)
+    return norm(pq .- pqTrue)
 end
 
 function TEST_qFromDcm()
     qTrue = q_random()
     Rtrue = q_toDcm(qTrue)
     q = q_fromDcm(Rtrue)
-    return norm(q - sign(q[1]*qTrue[1])*qTrue)
+    return norm(q .- sign(q[1]*qTrue[1])*qTrue)
 end
 
 function TEST_qTransformVector()
@@ -72,7 +65,7 @@ function TEST_qDerivative()
     w = randn(3)
     qDot = q_derivative(q, w)
     qDotTrue = q_multiply(q, [0; w]) ./ 2
-    return norm(qDot - qDotTrue)
+    return norm(qDot .- qDotTrue)
 end
 
 #=
@@ -145,18 +138,18 @@ end
 
 function TEST_qtoxyz()
     q = q_random()
-    ex = norm(q_tox(q) - q_transformVector(q, [1.0; 0.0; 0.0]))
-    ey = norm(q_toy(q) - q_transformVector(q, [0.0; 1.0; 0.0]))
-    ez = norm(q_toz(q) - q_transformVector(q, [0.0; 0.0; 1.0]))
+    ex = norm(q_tox(q) .- q_transformVector(q, [1.0; 0.0; 0.0]))
+    ey = norm(q_toy(q) .- q_transformVector(q, [0.0; 1.0; 0.0]))
+    ez = norm(q_toz(q) .- q_transformVector(q, [0.0; 0.0; 1.0]))
     return maximum([ex; ey; ez])
 end
 
 function TEST_qToDcm()
     q = q_random()
     R = q_toDcm(q)
-    qvx = crossMat(q[2:4])
+    qvx = toMatrix(crossMat(q[2:4]))
     Rtrue = I + 2*q[1].*qvx + 2*qvx*qvx
-    return norm(R*Rtrue' - I)
+    return maximum(abs, R*Rtrue' - Quats.I3)
 end
 
 @testset "Quats.jl" begin
@@ -170,7 +163,7 @@ end
     @test TEST_euler213() < ERR_TOL
     # @test TEST_euler231() < ERR_TOL
     @test TEST_cross() < ERR_TOL
-    #@test TEST_kin() < ERR_TOL
+    # @test TEST_kin() < ERR_TOL
     @test TEST_qtoxyz() < ERR_TOL
     @test TEST_qToDcm() < ERR_TOL
     @test TEST_qFromDcm() < ERR_TOL

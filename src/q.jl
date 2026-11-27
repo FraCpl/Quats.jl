@@ -4,7 +4,7 @@
 Get identity quaternion, with scalar component equal to 1 and
 vector components equal to zero.
 """
-q_identity() = [1.0, 0.0, 0.0, 0.0]
+q_identity() = (1.0, 0.0, 0.0, 0.0)
 
 """
     q_AC = q_multiply(q_AB, q_BC)
@@ -33,20 +33,15 @@ q_{AC} = q_{AB} ⊗ q_{BC}
 ```
 """
 @inline function q_multiplyn(q...)
-    qOut = copy(q[1])
+    s, x, y, z = q[1]
+    qOut = (s, x, y, z)
     for i in 2:lastindex(q)
-        q_multiply!(qOut, q[i])
+        qOut = q_multiplyCore(qOut, q[i])
     end
     return qOut
 end
 
-function q_multiplyn!(qOut, q...)
-    qOut .= q[1]
-    for i in 2:lastindex(q)
-        q_multiply!(qOut, q[i])
-    end
-    return qOut
-end
+q_multiplyn!(qOut, q...) = qOut .= q_multiplyn(q...)
 
 """
     R_AB = q_toDcm(q_AB)
@@ -141,7 +136,7 @@ Compute the unitary quaternion given as input an axis-angle representation.
 """
 q_fromAxisAngle(u, θ) = iszero(u) ? q_identity() : [cos(0.5θ); sin(0.5θ)*normalize(u)]
 
-function q_fromAxisAngle(u::Vector3, θ)
+function q_fromAxisAngle(u::Vec3, θ)
     iszero(u) && return (1.0, 0.0, 0.0, 0.0)
     x, y, z = normalize(u)
     sθ, cθ = sincos(θ / 2)
