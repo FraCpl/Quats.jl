@@ -1,3 +1,23 @@
+@inline Quats.Quat(q::AbstractVector) = q[1], q[2], q[3], q[4]
+@inline q_zero() = 1.0, 0.0, 0.0, 0.0
+@inline Base.:*(s::Number, a::Quats.Quat) = s*a[1], s*a[2], s*a[3], s*a[4]              # Scalar multiplication
+@inline Base.:*(a::Quats.Quat, s::Number) = s*a[1], s*a[2], s*a[3], s*a[4]              # Scalar multiplication
+@inline Base.:/(a::Quats.Quat, s::Number) = a[1]/s, a[2]/s, a[3]/s, a[4]/s              # Scalar division
+@inline Base.:*(a::Quats.Quat, b::Quats.Quat) = q_multiplyCore(a, b)                    # Quaternion multiplication
+@inline Base.:*(a::Quats.Quat, b::Quats.Vec3) = q_transformVector(a, b)                 # Vector transformation
+@inline LinearAlgebra.norm(q::Quats.Quat) = hypot(q[1], q[2], q[3], q[4])
+@inline LinearAlgebra.normalize(q::Quats.Quat) = q / norm(q)
+@inline LinearAlgebra.conj(q::Quats.Quat) = q[1], -q[2], -q[3], -q[4]
+@inline LinearAlgebra.adjoint(q::Quats.Quat) = q[1], -q[2], -q[3], -q[4]
+
+@inline toVector(q::Quats.Quat) = [q[1], q[2], q[3], q[4]]
+@inline Base.copyto!(v::AbstractVector, q::Quats.Quat) = v .= q
+
+@inline randn4() = randn(), randn(), randn(), randn()
+@inline randn4(rng) = randn(rng), randn(rng), randn(rng), randn(rng)
+@inline rand4() = rand(), rand(), rand(), rand()
+@inline rand4(rng) = rand(rng), rand(rng), rand(rng), rand(rng)
+
 # QUATERNION MULTIPLICATION -------------------------------------------------------------- #
 # Core quaternion multiplication function, implementing p ⊗ q
 function q_multiplyCore(p, q)
@@ -213,21 +233,21 @@ frame ``A``, projected into frame ``B``.
 @inline function q_rotx(θ::T) where {T}
     sθ, cθ = sincos(θ / 2)
     o = zero(T)
-    return (cθ, sθ, o, o)
+    return cθ, sθ, o, o
 end
 @inline q_rotx!(q, θ) = q .= q_rotx(θ)
 
 @inline function q_roty(θ::T) where {T}
     sθ, cθ = sincos(θ / 2)
     o = zero(T)
-    return (cθ, o, sθ, o)
+    return cθ, o, sθ, o
 end
 @inline q_roty!(q, θ) = q .= q_roty(θ)
 
 @inline function q_rotz(θ::T) where {T}
     sθ, cθ = sincos(θ / 2)
     o = zero(T)
-    return (cθ, o, o, sθ)
+    return cθ, o, o, sθ
 end
 @inline q_rotz!(q, θ) = q .= q_rotz(θ)
 
@@ -236,7 +256,7 @@ end
 
 Compute the unitary quaternion given as input an axis-angle representation.
 """
-q_fromAxisAngle(u, θ) = iszero(u) ? q_identity() : [cos(0.5θ); sin(0.5θ)*normalize(u)]
+q_fromAxisAngle(u, θ) = iszero(u) ? q_zero() : [cos(0.5θ); sin(0.5θ)*normalize(u)]
 
 function q_fromAxisAngle(u::Vec3, θ)
     iszero(u) && return (1.0, 0.0, 0.0, 0.0)
@@ -496,7 +516,7 @@ Compute the spherical linear interpolation between two quaternions at τ, where 
 @inline q_slerp(q0, q1, τ) = q_multiply(q0, q_power(q_multiply(q_transpose(q0), q1), τ))
 
 @inline function q_interp(t, q, ti)
-    id0 = findlast(≥(t), ti)
+    id0 = findlast(t .≤ ti)
     id1 = min(id0+1, length(t))
     return q_slerp(q[id0], q[id1], (ti - t[id0])/(t[id1] - t[id0]))
 end
@@ -585,4 +605,16 @@ Compute the z axis of frame B projected in frame A.
     y = 2(c2y - qs*qx)
     z = 1 + 2(c2z)
     return x, y, z
+end
+
+# DISPLAY FUNCTIONS ---------------------------------------------------------------------- #
+function Base.show(io::IO, ::MIME"text/plain", q::Quat{T}) where T
+    println(io, "Quats.Quat{$T}:")
+    for i in 1:4
+        print(io, " ")
+        x = q[i]
+        !signbit(x) && print(io, " ")
+        show(io, round(x, digits=16))
+        i < 4 && println(io)
+    end
 end
