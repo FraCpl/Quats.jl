@@ -123,23 +123,6 @@ Translate the input rotation matrix into a unitary quaternion.
 @inline q_fromDcm(R_AB) = q_fromDcmCore(R_AB)
 @inline q_fromDcm!(q_AB, R_AB) = q_AB .= q_fromDcmCore(R_AB)
 
-
-@inline function q_fromAxesCore(xB_A, yB_A, zB_A)
-    r11, r21, r31 = xB_A
-    r12, r22, r32 = yB_A
-    r13, r23, r33 = zB_A
-    return q_fromDcmCore((r11, r21, r31, r12, r22, r32, r13, r23, r33)) # q_AB
-end
-
-"""
-    q_AB = q_fromAxes(xB_A, yB_A, zB_A)
-
-Compute the attitude quaternion given as input the axes of a reference frame.
-"""
-@inline q_fromAxes(xB_A::AbstractVector, yB_A::AbstractVector, zB_A::AbstractVector) = toVector(q_fromAxesCore(xB_A, yB_A, zB_A))
-@inline q_fromAxes(xB_A, yB_A, zB_A) = q_fromAxesCore(xB_A, yB_A, zB_A)
-@inline q_fromAxes!(q_AB, xB_A, yB_A, zB_A) = q_AB .= q_fromAxesCore(xB_A, yB_A, zB_A)
-
 """
     q_random()
 
@@ -288,9 +271,25 @@ end
     return [qx/nqv; qy/nqv; qz/nqv], 2atan(nqv, qs)
 end
 
+@inline function q_fromAxesCore(xB_A, yB_A, zB_A)
+    r11, r21, r31 = xB_A
+    r12, r22, r32 = yB_A
+    r13, r23, r33 = zB_A
+    return q_fromDcmCore((r11, r21, r31, r12, r22, r32, r13, r23, r33)) # q_AB
+end
+
+"""
+    q_AB = q_fromAxes(xB_A, yB_A, zB_A)
+
+Compute the attitude quaternion given as input the axes of a reference frame.
+"""
+@inline q_fromAxes(xB_A::AbstractVector, yB_A::AbstractVector, zB_A::AbstractVector) = toVector(q_fromAxesCore(xB_A, yB_A, zB_A))
+@inline q_fromAxes(xB_A, yB_A, zB_A) = q_fromAxesCore(xB_A, yB_A, zB_A)
+@inline q_fromAxes!(q_AB, xB_A, yB_A, zB_A) = q_AB .= q_fromAxesCore(xB_A, yB_A, zB_A)
+
 @inline function q_toAxes(q_AB)
-    R = q_toDcm(q_AB)
-    return R[1, :], R[2, :], R[3, :]    # xB_A, yB_A, zB_A
+    r11, r21, r31, r12, r22, r32, r13, r23, r33 = q_toDcmCore(q_AB)
+    return (r11, r21, r31), (r12, r22, r32), (r13, r23, r33)    # xB_A, yB_A, zB_A
 end
 
 # QUATERNION INVERSE --------------------------------------------------------------------- #
