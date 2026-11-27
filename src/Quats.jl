@@ -9,10 +9,14 @@ const ey = (0.0, 1.0, 0.0)
 const ez = (0.0, 0.0, 1.0)
 const I3 = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
 
+# CAUTION
+# Math functions involving Vec3 and Mat3 do not verify the size of the inputs. These shall
+# only be used when the user is sure that input data are effectively 3-dimesional vectors
+# and/or 3x3 matrices, otherwise the functions may provide an incorrect output.
 export Vec3, Quat, Mat3
 export toVector, toVector!, toMatrix, toMatrix!
-export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3, vmul3, vmul3!, getij
-export randn3, zeros3, rand3, evalpoly3, randn4
+export dot3, cross3, mmul3, mmul3!, mrow3, mcol3, crossSq3, vmul3, vmul3!, getij, evalpoly3
+export randn3, zeros3, rand3, randn4, rand4
 export crossMat, crossMat!, crossMatSq, crossMatSq!
 export cross!, crossSq!, addCross!, addCrossSq!, crossSq
 include("math.jl")
